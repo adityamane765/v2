@@ -1,0 +1,31 @@
+# Node
+node_modules/
+dist/
+*.log
+.turbo/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.devnet.example
+!.env.mainnet.example
+# IDE
+.vscode/
+.idea/
+
+#agents
+.agents/
+.factory/
+skills-lock.json
+
+
+#ui_iters
+backup_2/
+backup_src
+optimization.md
+suggestions.md
+
+# keypairs
+.demo-keypairs/
