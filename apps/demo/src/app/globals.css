@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
- * Nyx design tokens (mirrors apps/demo/design-system/tokens/tokens.css).
- * Source of truth: apps/demo/design-system/tokens/tokens.json
+ * Darknyx design tokens (mirrors apps/demo/design-system/tokens/tokens.css).
+ * Token values mirror apps/demo/design-system/tokens/tokens.json
  * ------------------------------------------------------------------------- */
 :root {
   /* Color */
@@ -593,7 +593,9 @@ body {
   padding: 14px;
 }
 .nyx-doc-mermaid svg {
-  min-width: 680px;
+  width: 100%;
+  max-width: 620px;
+  min-width: min(520px, 100%);
   height: auto;
   display: block;
   margin: 0 auto;

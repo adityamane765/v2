@@ -1,11 +1,6 @@
-const accent = "var(--nyx-accent)";
+import { stack } from "@/components/landing/landing-copy";
 
-const STACK = [
-  { label: "Solana vault", detail: "Custody, roots, nullifiers, and final settlement" },
-  { label: "Intel TDX", detail: "Private matching in an attested confidential VM" },
-  { label: "ZK proofs", detail: "Spend and match validity checked on-chain" },
-  { label: "Trading key", detail: "Order identity stays separate from wallet custody" },
-];
+const accent = "var(--nyx-accent)";
 
 export function StackStrip() {
   return (
@@ -19,24 +14,23 @@ export function StackStrip() {
             className="font-sans text-[10px] uppercase tracking-[0.18em]"
             style={{ color: accent }}
           >
-            Technical spine
+            {stack.eyebrow}
           </span>
           <span
             className="font-sans text-[10px]"
             style={{ color: "rgb(120,113,108)" }}
           >
-            TEE v2 workstream
+            {stack.note}
           </span>
         </div>
         <p
           className="mt-3 max-w-xl font-sans text-[11px] leading-[1.75]"
           style={{ color: "rgb(87,83,78)" }}
         >
-          Darknyx keeps the architecture explainable: custody is a Solana program, matching is
-          a measured enclave, and every sensitive state transition has a verification path.
+          {stack.body}
         </p>
         <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4">
-          {STACK.map((s) => (
+          {stack.items.map((s) => (
             <li
               key={s.label}
               className="flex flex-col gap-0.5 border-l border-stone-200 pl-3 transition-colors hover:border-[var(--nyx-accent)]/50"

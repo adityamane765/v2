@@ -33,10 +33,10 @@ export function CtaSection() {
         >
           {cta.body}
         </p>
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/docs/architecture-overview"
-            className="group inline-flex items-center gap-2 rounded-sm px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:opacity-90"
+            className="group inline-flex items-center gap-2 rounded-sm px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
             style={{
               background: "var(--nyx-accent-soft)",
               border: "1px solid oklch(0.62 0.14 260 / 0.4)",
@@ -55,10 +55,16 @@ export function CtaSection() {
             </svg>
           </Link>
           <Link
-            href="/docs"
-            className="ml-3 inline-flex items-center gap-2 rounded-sm border border-stone-200 px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:border-[var(--nyx-accent)]/50 hover:text-[var(--nyx-accent)]"
+            href="/docs/trust-model"
+            className="inline-flex items-center gap-2 rounded-sm border border-stone-200 px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:border-[var(--nyx-accent)]/50 hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
           >
-            Docs
+            Trust model
+          </Link>
+          <Link
+            href="/docs/api-and-integration"
+            className="inline-flex items-center gap-2 rounded-sm border border-stone-200 px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:border-[var(--nyx-accent)]/50 hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
+          >
+            API surface
           </Link>
         </div>
       </div>

@@ -81,7 +81,7 @@ function ScrollDownButton() {
         document.getElementById("landing-content")?.scrollIntoView({ behavior: "smooth" });
       }}
       aria-label="Scroll down"
-      className="flex items-center justify-center transition-opacity hover:opacity-70"
+      className="flex items-center justify-center transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
       style={{
         width: 40,
         height: 40,

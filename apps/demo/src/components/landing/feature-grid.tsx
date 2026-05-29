@@ -2,56 +2,14 @@
 
 import Link from "next/link";
 
-const cobalt = "var(--nyx-accent)";
-const green = "#5fb85f";
+import { solutionCards } from "@/components/landing/landing-copy";
 
-const FEATURES = [
-  {
-    eyebrow: "01 · Hidden intent",
-    title: "Private orders,\npublicly settled.",
-    sub: "Side, price, and amount stay inside the TDX enclave until batch settlement.",
-    cluster: "TEE",
-    clusterColor: cobalt,
-    clusterBg: "var(--nyx-accent-soft)",
-    tech: "Intel TDX · Phala",
-    image: "/card-1.jpg",
-  },
-  {
-    eyebrow: "02 · Verifiable settlement",
-    title: "Every batch has\nproof material.",
-    sub: "VALID_SPEND · VALID_MATCH_BATCH · BN254 verification on Solana.",
-    cluster: "L1",
-    clusterColor: green,
-    clusterBg: "rgba(95,184,95,0.08)",
-    tech: "groth16-solana",
-    image: "/card-3.jpg",
-  },
-  {
-    eyebrow: "03 · Attested executor",
-    title: "The matcher is\nmeasured code.",
-    sub: "Intel TDX attestation binds settlement signatures to the approved image.",
-    cluster: "TEE",
-    clusterColor: cobalt,
-    clusterBg: "var(--nyx-accent-soft)",
-    tech: "Phala Cloud",
-    image: "/card-2.jpg",
-  },
-  {
-    eyebrow: "04 · UTXO accounting",
-    title: "Shielded notes,\nverifiable roots.",
-    sub: "Poseidon commitments, nullifiers, and root history keep funds reconcilable.",
-    cluster: "L1",
-    clusterColor: green,
-    clusterBg: "rgba(95,184,95,0.08)",
-    tech: "darkpool-crypto",
-    image: "/card-4.jpg",
-  },
-];
+const cobalt = "var(--nyx-accent)";
+const green = "var(--nyx-signal-green)";
 
 export function FeatureGrid() {
   return (
     <section
-      id="landing-content"
       className="relative isolate border-t"
       style={{ borderColor: "rgba(10,10,13,0.08)" }}
     >
@@ -61,14 +19,14 @@ export function FeatureGrid() {
             className="font-sans text-[10px] uppercase tracking-[0.18em]"
             style={{ color: cobalt }}
           >
-            Investor brief
+            {solutionCards.eyebrow}
           </span>
           <h2
             className="mt-3 font-sans font-semibold leading-tight tracking-[-0.02em]"
             style={{ fontSize: "clamp(18px, 2.2vw, 28px)" }}
           >
-            <span style={{ color: "rgb(28,25,23)" }}>A private liquidity venue</span>
-            <span style={{ color: "rgb(87,83,78)" }}> with a verifiable settlement core.</span>
+            <span style={{ color: "rgb(28,25,23)" }}>{solutionCards.title}</span>
+            <span style={{ color: "rgb(87,83,78)" }}> {solutionCards.titleMuted}</span>
           </h2>
         </div>
 
@@ -76,13 +34,15 @@ export function FeatureGrid() {
           className="mt-10 grid grid-cols-1 gap-px sm:grid-cols-2"
           style={{ background: "rgb(231,229,228)" }}
         >
-          {FEATURES.map((f) => (
+          {solutionCards.cards.map((f) => {
+            const clusterColor = f.cluster === "L1" || f.cluster === "ZK" ? green : cobalt;
+            const clusterBg = f.cluster === "L1" || f.cluster === "ZK" ? "rgba(95,184,95,0.08)" : "var(--nyx-accent-soft)";
+            return (
             <article
               key={f.eyebrow}
               className="group relative overflow-hidden text-left"
               style={{ background: "white", padding: "28px 32px 24px" }}
             >
-              {/* background image - shifted to cobalt blue via filter */}
               <div
                 className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-85"
                 style={{
@@ -93,7 +53,6 @@ export function FeatureGrid() {
                 }}
               />
 
-              {/* dark gradient overlay so text stays readable */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -102,9 +61,7 @@ export function FeatureGrid() {
                 }}
               />
 
-              {/* content container to ensure it renders above the absolute-positioned media */}
               <div className="relative z-10">
-                {/* top row */}
                 <div className="flex items-center justify-between">
                   <div
                     style={{
@@ -112,8 +69,8 @@ export function FeatureGrid() {
                       alignItems: "center",
                       gap: "6px",
                       padding: "4px 10px",
-                      background: f.clusterBg,
-                      border: `1px solid ${f.cluster === "TEE" ? "oklch(0.62 0.14 260 / 0.35)" : "rgba(95,184,95,0.35)"}`,
+                      background: clusterBg,
+                      border: `1px solid ${f.cluster === "TEE" || f.cluster === "FBA" ? "oklch(0.62 0.14 260 / 0.35)" : "rgba(95,184,95,0.35)"}`,
                       borderRadius: "2px",
                     }}
                   >
@@ -122,13 +79,13 @@ export function FeatureGrid() {
                         width: "5px",
                         height: "5px",
                         borderRadius: "50%",
-                        background: f.clusterColor,
+                        background: clusterColor,
                         flexShrink: 0,
                       }}
                     />
                     <span
                       className="font-sans text-[8.5px] uppercase tracking-[0.18em]"
-                      style={{ color: f.clusterColor }}
+                      style={{ color: clusterColor }}
                     >
                       {f.cluster}
                     </span>
@@ -141,7 +98,6 @@ export function FeatureGrid() {
                   </span>
                 </div>
 
-                {/* title block */}
                 <div className="mt-10">
                   <div
                     className="font-sans text-[9px] uppercase tracking-[0.2em]"
@@ -160,7 +116,6 @@ export function FeatureGrid() {
                   </h3>
                 </div>
 
-                {/* sub — bottom */}
                 <div className="mt-8">
                   <span
                     className="font-sans text-[11px] leading-[1.65]"
@@ -171,27 +126,27 @@ export function FeatureGrid() {
                 </div>
               </div>
 
-              {/* hover line */}
               <div
                 className="absolute inset-x-0 bottom-0 h-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 style={{
-                  background: `linear-gradient(to right, transparent, ${f.clusterColor}55, transparent)`,
+                  background: `linear-gradient(to right, transparent, ${clusterColor}55, transparent)`,
                 }}
               />
             </article>
-          ))}
+          );
+          })}
         </div>
 
         <Link
           href="/docs/architecture-overview"
-          className="mt-8 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
+          className="mt-8 inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
         >
           Technical architecture
           <span aria-hidden>→</span>
         </Link>
         <Link
           href="/docs"
-          className="ml-6 mt-8 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
+          className="ml-6 mt-8 inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
         >
           Read docs
           <span aria-hidden>→</span>

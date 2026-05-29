@@ -22,6 +22,12 @@ export function PlainOverview() {
           >
             <span style={{ color: "rgb(28,25,23)" }}>{plainBand.title}</span>
           </h2>
+          <p
+            className="mt-4 max-w-xl font-sans text-[12px] leading-[1.85]"
+            style={{ color: "rgb(87,83,78)" }}
+          >
+            {plainBand.lede}
+          </p>
         </div>
 
         <ul className="mt-10 grid gap-px sm:grid-cols-3" style={{ background: "rgb(231,229,228)" }}>
