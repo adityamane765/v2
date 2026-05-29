@@ -1,7 +1,7 @@
 # Glossary
 
 > Quick reference for the terms, acronyms, and concepts used
-> throughout the Nyx documentation. Sorted alphabetically.
+> throughout the Darknyx documentation. Sorted alphabetically.
 
 ---
 
@@ -10,14 +10,14 @@
 **ALT (Address Lookup Table).** A Solana mechanism for compressing
 the account list of a versioned transaction. An ALT holds up to
 256 addresses; a v0 transaction references them by index (1
-byte) instead of by pubkey (32 bytes). Nyx uses a per-batch ALT
+byte) instead of by pubkey (32 bytes). Darknyx uses a per-batch ALT
 to fit `tee_forced_settle_batched` under the 1232-byte
 transaction size cap. See
 [settlement-pipeline](./settlement-pipeline.md) § Tx C.
 
 **Anchor.** The Rust framework for writing Solana programs.
 Provides macros for account validation, instruction
-serialization, and PDA derivation. Nyx's vault is Anchor 0.32.
+serialization, and PDA derivation. Darknyx's vault is Anchor 0.32.
 
 **Anchor discriminator.** The first 8 bytes of every Anchor
 instruction's data, computed as `sha256("global:<ix_name>")[..8]`.
@@ -25,8 +25,7 @@ Lets the runtime dispatch to the right handler.
 
 **Ark-circom.** A Rust library bridging arkworks (the Rust ZK
 ecosystem) and Circom (the ZK circuit DSL). Loads `.wasm` + `.r1cs`
-files, generates witnesses, produces Groth16 proofs. PR 4g.4b
-wires this into Nyx's in-TEE prover.
+files, generates witnesses, and produces Groth16 proofs.
 
 **Arkworks.** A family of Rust ZK crates (`ark-bn254`, `ark-ff`,
 `ark-groth16`, etc.) that implement BN254 curve operations, field
@@ -89,7 +88,7 @@ SOL and only 7 fill, you get a 3-SOL change note. Encoded as
 `note_e` (buyer) or `note_f` (seller) in the `MatchResultPayload`.
 
 **Circom.** A domain-specific language for ZK circuits, by iden3.
-Nyx's circuits are written in Circom 2.x; compiled with snarkjs
+Darknyx's circuits are written in Circom 2.x; compiled with snarkjs
 into `.wasm` witness calculators and `.r1cs` constraint systems.
 
 **Circuit.** A representation of a computation as a set of
@@ -103,7 +102,7 @@ volume subject to all limit constraints.
 **Commitment.** A cryptographic binding: a hash that "commits"
 to some plaintext but doesn't reveal it. Note commitments
 (`Poseidon7`) and user commitments (`Poseidon2`) are the two
-primary commitment uses in Nyx.
+primary commitment uses in Darknyx.
 
 **`compose_hash`.** A deterministic hash of the Docker image
 running inside the TDX CVM. Registered in `vault_config` via
@@ -113,7 +112,7 @@ expected code.
 **Compute unit (CU).** Solana's per-tx computation budget. The
 default is 200k CU per tx; you can bump up to ~1.4M with a
 compute-budget ix. `verify_match_batch` is the highest-CU ix in
-Nyx at ~2.5M (we bump explicitly).
+Darknyx at ~2.5M (we bump explicitly).
 
 **Conservation.** The invariant that input amounts equal output
 amounts: `a_amount == quote_amt + buyer_change + buyer_fee`,
@@ -125,7 +124,7 @@ consumed by `tee_forced_settle_batched`. Distinct from a
 `NullifierEntry` (which comes from VALID_SPEND withdraws).
 
 **CVM (Confidential Virtual Machine).** A VM with memory
-encryption and remote attestation. Nyx's matching layer runs in a
+encryption and remote attestation. Darknyx's matching layer runs in a
 TDX CVM operated under Phala Cloud's `dstack` framework.
 
 ---
@@ -151,7 +150,7 @@ Ed25519 signing key and JWT secret.
 ## E
 
 **Ed25519.** An elliptic-curve signature scheme. Used by Solana
-natively (every wallet is Ed25519), and by Nyx for the TEE
+natively (every wallet is Ed25519), and by Darknyx for the TEE
 signing key and the user trading keys.
 
 **Enclave.** Synonym for "TEE VM" or "CVM" in casual use.
@@ -160,21 +159,15 @@ trusted regions; TDX uses "VM" for whole-VM trust), but the
 practical meaning is the same: code running inside a hardware-
 attested isolation boundary.
 
-**Ephemeral Rollup.** A short-lived Solana rollup, like
-MagicBlock's PER. Nyx v1 used PER for matching; the TEE v2
-migration moves off of PER.
-
----
-
 ## F
 
-**FBA (Frequent-Batch Auction).** The matching algorithm Nyx uses
+**FBA (Frequent-Batch Auction).** The matching algorithm Darknyx uses
 — orders accumulate, every `BATCH_MS` they cross at a uniform
 clearing price. Defends against front-running within a batch.
 
 **Fee-payer.** The Solana account that pays for the tx's
-inclusion fee + per-ix rent. Nyx's TEE signing key doubles as
-the fee-payer (PR 4g.3 walk-back).
+inclusion fee + per-ix rent. Darknyx's TEE signing key doubles as
+the fee-payer for settlement transactions.
 
 **FIFO (First-In-First-Out).** The matcher's tie-breaker: at any
 given price level, earlier orders fill before later orders.
@@ -189,7 +182,7 @@ bits. Every value Poseidon-hashes must fit in Fr.
 
 ## G
 
-**Groth16.** The ZK proving system Nyx uses. Smallest proof size
+**Groth16.** The ZK proving system Darknyx uses. Smallest proof size
 (~200 bytes), fastest on-chain verification, mature tooling
 (circom + snarkjs).
 
@@ -231,7 +224,7 @@ Layer A auth. HS256-signed with a TEE-derived secret.
 ## K
 
 **KDF (Key Derivation Function).** A function for deriving new
-keys from a seed. Nyx uses HKDF-SHA256 for the user key chain
+keys from a seed. Darknyx uses HKDF-SHA256 for the user key chain
 and dstack's deterministic KDF for the TEE keys.
 
 **`kms` (dstack-kms).** See dstack-kms above.
@@ -270,8 +263,7 @@ specific match. See [settlement-pipeline](./settlement-pipeline.md)
 ## M
 
 **Matcher.** The algorithm that takes a snapshot of an order
-book + oracle and produces a `RunBatchOutput`. Lives in the
-`darkpool-matcher` crate (the single source of truth).
+book + oracle and produces the matched fills for a batch.
 
 **Match leaf.** Synonym for "leaf hash" in the VALID_MATCH_BATCH
 context.
@@ -292,7 +284,7 @@ leaves. Withdraws prove inclusion against a recent root.
 **MPC (Multi-Party Computation).** A cryptographic protocol where
 multiple parties jointly compute a function without any party
 learning the others' inputs. Used by Renegade for matching;
-not used in Nyx (we use a TEE instead).
+not used in Darknyx (we use a TEE instead).
 
 **MRTD.** The TDX measurement of the boot-time VM image. Part
 of the attestation chain; clients verify it matches the
@@ -306,7 +298,7 @@ on-chain `vault_config.tee_pubkey`. See
 
 ## N
 
-**Note.** Nyx's UTXO. A 32-byte Poseidon commitment encoding
+**Note.** Darknyx's UTXO. A 32-byte Poseidon commitment encoding
 (mint, amount, owner_commit, nonce, blinding). Stored as a
 Merkle tree leaf; spent via VALID_SPEND.
 
@@ -320,11 +312,11 @@ spending key + note commitment. Allocated as a
 `NullifierEntry` PDA on withdraw; reuse prevents
 double-spending.
 
-**Nyx-tee.** The single-process Rust daemon running inside the
+**Darknyx-tee.** The single-process Rust daemon running inside the
 TDX CVM. Houses the order book, matcher, oracle sync, prover,
 and settle scheduler.
 
-**Nyx-tee-loadgen.** The load-generation harness for benchmarking
+**Darknyx-tee-loadgen.** The load-generation harness for benchmarking
 the TEE.
 
 ---
@@ -348,7 +340,7 @@ spendable owner.
 ## P
 
 **PDA (Program-Derived Address).** A Solana address derived
-deterministically from a program id + a set of seeds. Nyx uses
+deterministically from a program id + a set of seeds. Darknyx uses
 PDAs for every per-leaf account (NoteLock, NullifierEntry,
 WalletEntry, ConsumedNoteEntry, BatchValidityMarker).
 
@@ -357,13 +349,10 @@ Holds the five derivable PDAs (note_lock_a/b/e/f +
 batch_validity_marker). See
 [settlement-pipeline](./settlement-pipeline.md) § Tx C.
 
-**PER (Permission Group Ephemeral Rollup).** MagicBlock's
-ephemeral-rollup product. Nyx v1 used it; TEE v2 migrates away.
-
-**Phala Cloud.** The TDX hosting provider Nyx uses. dstack
+**Phala Cloud.** The TDX hosting provider Darknyx uses. dstack
 framework, per-minute pricing, public attestation endpoint.
 
-**Poseidon.** The hash function used throughout Nyx's
+**Poseidon.** The hash function used throughout Darknyx's
 cryptography. BN254-native; SNARK-efficient (~30× cheaper than
 SHA-256 in-circuit).
 
@@ -376,7 +365,7 @@ prover and verifier (vs a private witness, which only the prover
 knows). VALID_MATCH_BATCH has one public input: the batch
 Merkle root.
 
-**Pyth.** The oracle network providing price feeds. Nyx pulls
+**Pyth.** The oracle network providing price feeds. Darknyx pulls
 Pyth prices via Hermes inside the TEE; the matcher reads
 TWAPs for circuit-breaker bounds.
 
@@ -409,7 +398,7 @@ provides this; clients can verify the cert's TEE binding.
 **Replay.** Submitting the same valid operation twice. Defended
 against by per-leaf PDA init constraints (see § R in this glossary).
 
-**RPC.** Remote Procedure Call. Nyx uses Solana's JSON-RPC for
+**RPC.** Remote Procedure Call. Darknyx uses Solana's JSON-RPC for
 on-chain submissions and Pyth's Hermes RPC for oracle pulls.
 
 **RTMR3.** TDX runtime measurement register #3. Contains
@@ -439,7 +428,7 @@ matcher output to on-chain confirmation. See
 witness generation, proof generation. The user-side ZK proofs
 (VALID_INPUT, VALID_SPEND) currently use snarkjs.
 
-**Solana.** The L1 underlying Nyx. ~400ms slot time, ~2.5s
+**Solana.** The L1 underlying Darknyx. ~400ms slot time, ~2.5s
 finality, native Groth16 BPF support via `groth16-solana`.
 
 **Spending key.** The private key that authorizes spending
@@ -465,7 +454,7 @@ atomic settle. See [settlement-pipeline](./settlement-pipeline.md)
 § Tx D.
 
 **TEE (Trusted Execution Environment).** The hardware-attested
-isolation boundary inside which the Nyx matching layer runs.
+isolation boundary inside which the Darknyx matching layer runs.
 TDX in our case.
 
 **Trading key.** The user's Ed25519 keypair used to sign order
@@ -486,7 +475,7 @@ pipeline. See [settlement-pipeline](./settlement-pipeline.md).
 in every note's `owner_commit` field. Registered on-chain via
 `create_wallet`.
 
-**UTXO.** Unspent Transaction Output. The custody model Nyx uses
+**UTXO.** Unspent Transaction Output. The custody model Darknyx uses
 — funds live in commitment-form "notes" instead of an account
 balance.
 
@@ -503,13 +492,8 @@ is correctly formed for declared `(mint, amount)`. Used at
 deposit AND lock-note time.
 
 **VALID_MATCH_BATCH.** The TEE-generated batched ZK proof
-attesting validity of all N matches in a batch. The single
-public input is the batch Merkle root. PR 4g.4 wires the
-in-TEE prover.
-
-**VALID_PRICE.** Deprecated in v3.5 (folded into VALID_MATCH_BATCH).
-Used to prove the clearing-price commitment matched the
-declared price.
+attesting validity of all matches in a batch. The single public
+input is the batch Merkle root.
 
 **VALID_SPEND.** A user-generated ZK proof for withdraws. Proves
 note ownership, generates the nullifier, computes the
@@ -528,7 +512,7 @@ Merkle tree, nullifier set, and consumed-note set; verifies all
 withdraws and settles.
 
 **Verifying key (VK).** The public parameters of a Groth16
-circuit. Used by the verifier to check proofs. Nyx's VKs are
+circuit. Used by the verifier to check proofs. Darknyx's VKs are
 baked into the on-chain verifier as Rust constants
 (`vk_match_batch_n16.rs` etc.).
 
@@ -559,13 +543,9 @@ signed VAAs. 19 guardians, quorum 13.
 ## Z
 
 **ZK (Zero-Knowledge).** A proof that something is true without
-revealing why. Nyx's six circuits all generate ZK proofs that
+revealing why. Darknyx's six circuits all generate ZK proofs that
 the on-chain verifier accepts.
 
 **zkey.** snarkjs's proving-key format. Loaded by ark-circom (or
 rapidsnark) to produce proofs.
 
----
-
-*Last updated 2026-05-29.*
-</content>

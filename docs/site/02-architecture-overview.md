@@ -12,68 +12,27 @@
 
 ### Layer 1 — Custody (on Solana)
 
-Two Solana programs, both Anchor 0.32:
+The on-chain custody layer records user funds, note commitments,
+spent-note tracking, and settlement authorization.
+Users never hand custody to the TEE or the API server.
 
-- **`vault`** (program id `C63vKvysCzX55PKraas4Wc22ijqjGJQdPC1mrzCFVWZx`
-  on devnet) — owns the funds, the Merkle tree of UTXO note
-  commitments, the nullifier set, the consumed-note set, the
-  note-lock set, and the per-batch validity markers.
-- **`matching_engine`** (program id `6EasFxo6RCWrK4KAwcdUJqL4KjReLC3rtah8EtHgHSqe`
-  on devnet) — owns the on-chain order metadata and the batch
-  results buffer. This program is being deprecated in the TEE v2
-  migration; matching is moving into the enclave, but the program
-  remains for the v1 path and as the on-chain entry point during
-  the cutover.
+For integrators, the important guarantee is:
 
-Custody is the only layer that can hold or move user tokens. Every
-withdraw requires a VALID_SPEND zero-knowledge proof that proves
-the user owns a note in the current Merkle tree, has not previously
-spent it (nullifier check), and is generating the correct
-change-note commitment. Every settle requires a VALID_MATCH_BATCH
-proof that attests the match was valid against the inputs the TEE
-declared, plus an Ed25519 signature from the registered TEE pubkey.
+- deposits and withdrawals are direct Solana transactions;
+- notes cannot be spent twice;
+- settlement is accepted only when it is signed by the registered TEE key;
+- users can still withdraw directly even if the matching API is unavailable.
 
 ### Layer 2 — Matching (inside a TDX CVM)
 
-A single-process Rust daemon, `nyx-tee`, runs inside a Phala Cloud
-Confidential Virtual Machine. Inside that process:
+A single process (`darknyx-tee`) runs inside a TDX confidential VM and handles:
 
-```text
-nyx-tee  (single Rust process, ~3 GB RAM, ~4 vCPU)
-  │
-  ├── dstack handshake (boot)
-  │   └── derives Ed25519 signer + JWT secret from
-  │       dstack-kms-managed root key
-  │
-  ├── HTTP server (axum on :8080 / TLS on :443 via dstack-ingress)
-  │   ├── GET /health, /info, /attestation       (public)
-  │   ├── POST /auth/token                       (public)
-  │   ├── POST/DELETE/GET /orders                (bearer-protected)
-  │   ├── GET /settlement/status/{batch_id}      (bearer-protected)
-  │   └── POST /__debug/oracle/seed              (feature-gated)
-  │
-  ├── matcher driver (tokio interval)
-  │   ├── runs every BATCH_MS = 2000 ms
-  │   ├── pulls from in-memory OrderBook
-  │   ├── pulls oracle snapshot from cache
-  │   ├── calls darkpool_matcher::run_batch()
-  │   └── emits RunBatchOutput on mpsc channel
-  │
-  ├── oracle sync (tokio background)
-  │   ├── fetches from Pyth Hermes pull oracle every 1 s
-  │   ├── verifies Wormhole VAA via secp256k1 ecrecover
-  │   └── writes verified prices to OracleCache
-  │
-  └── settle scheduler (tokio task)
-      ├── consumes matches from mpsc channel
-      ├── for each match:
-      │   ├── builds Tx A (lock_note × 2)
-      │   ├── runs in-TEE Groth16 prover (VALID_MATCH_BATCH)
-      │   ├── builds Tx B (verify_match_batch) + ALT
-      │   ├── builds Tx D (tee_forced_settle_batched)
-      │   └── builds Tx E (close_batch_validity_marker)
-      └── exposes per-batch status via the HTTP surface
-```
+- **Public + private API surface** (`/info`, `/attestation`, `/orders`, `/settlement/status/...`)
+- **Order matching loop** on fixed intervals
+- **Oracle price ingestion**
+- **Settlement submission to Solana**
+
+For users/integrators, the key point is simple: the TEE performs matching privately, while final settlement and custody guarantees are enforced on-chain.
 
 The boundary between this layer and Solana is the settle pipeline
 (five transactions per batch, documented in
@@ -85,47 +44,28 @@ between this layer and clients is the HTTPS API (documented in
 
 The SDK is the user-side bridge. It:
 
-1. Generates the ZK proofs (currently via snarkjs; v3 work explores
-   in-browser ark-groth16). The matching prover lives in the TEE;
-   user proofs (VALID_INPUT for deposits, VALID_SPEND for
-   withdraws, VALID_WALLET_CREATE for wallet registration) stay
-   client-side because they involve the user's spending key.
-
-2. Verifies the TEE's attestation chain before trusting any data
-   from it. The SDK ships a `verifyTeeAttestation()` function that
-   runs against the t16z TEE Attestation Explorer's verification
-   logic plus a comparison against the on-chain `vault_config.tee_pubkey`
-   and `vault_config.tee_compose_hash`.
-
-3. Signs canonical order bodies with the user's trading-key Ed25519
-   keypair (see [api-and-integration](./api-and-integration.md) §
-   authentication). The trading key is distinct from the user's
-   Solana wallet keypair by construction.
-
-4. Submits Solana transactions through any RPC the user chooses;
-   the SDK doesn't operate its own RPC.
+1. Verifies the TEE before sending private order intent.
+2. Authenticates with the API and manages bearer-token refresh.
+3. Builds and signs order requests.
+4. Reads account, note, tree, and settlement state.
+5. Submits Solana transactions through the user's preferred RPC.
 
 ---
 
 ## Component map
 
 ```mermaid
-flowchart TB
-  SDK["TypeScript SDK<br/>• ZK provers (VALID_INPUT, VALID_SPEND, ...)<br/>• Solana tx builders<br/>• TEE attestation verifier<br/>• HTTPS client + Ed25519 trading-key signer"]
-
-  subgraph SOL["SOLANA"]
-    VAULT["vault program<br/>• create_wallet / deposit / lock_note / verify_match_batch<br/>• tee_forced_settle_batched / close_batch_validity_marker / withdraw<br/><br/>State:<br/>• Merkle tree<br/>• nullifier set<br/>• consumed-note set<br/>• VaultConfig (tee_pubkey)<br/>• per-batch markers"]
-    MATCHING["matching_engine program<br/>(deprecating in TEE v2)"]
-  end
-
-  subgraph TEE["TDX CVM (Phala Cloud)"]
-    DAEMON["nyx-tee daemon<br/>• HTTP / RA-TLS<br/>• matcher driver<br/>• oracle sync<br/>• settle scheduler<br/>• in-TEE prover (VALID_MATCH_BATCH n=16)<br/><br/>Keys from dstack-kms:<br/>• tee_authority (Ed25519)<br/>• JWT secret<br/>• Solana fee-payer"]
-  end
-
-  SDK -->|"Solana RPC<br/>(deposits, withdraws, register)"| VAULT
-  SDK -->|"HTTPS<br/>(orders, status)"| DAEMON
-  DAEMON -->|"settle pipeline (Tx A..E)"| VAULT
+flowchart LR
+  C["Client / SDK"] -->|"deposit / withdraw"| S["Solana custody"]
+  C -->|"verify / trade / monitor"| T["TDX API + matcher"]
+  T -->|"signed settlement"| S
 ```
+
+| Component | What it handles | User-facing interface |
+|---|---|---|
+| **Client / SDK** | TEE verification, auth, order signing, account reads, Solana tx submission | Wallet + SDK/API calls |
+| **TDX API + matcher** | Private order intake, matching, account/tree reads, realtime updates, settlement submission | HTTPS + WebSocket |
+| **Solana custody** | Deposits, withdrawals, note state, spent-note tracking, settlement authorization | Solana RPC / returned tx signatures |
 
 ---
 
@@ -133,53 +73,30 @@ flowchart TB
 
 ### Client → Solana
 
-Three direct interactions:
+Users interact with Solana directly for custody operations:
 
-1. **`create_wallet`** — Register the user's `user_commitment` (the
-   Poseidon hash of `spending_key, r_owner`). This is the
-   "I am opening an account" moment.
+1. **Create/open account state** — establish the user's note identity.
+2. **Deposit** — move funds into a private note.
+3. **Withdraw** — spend a note back to a normal wallet destination.
 
-2. **`deposit`** — Move tokens from the user's wallet into a fresh
-   note. Requires a VALID_INPUT proof (proves the note is correctly
-   formed with the declared mint and amount).
-
-3. **`withdraw`** — Move tokens from a note back to a wallet.
-   Requires a VALID_SPEND proof (proves note ownership, generates a
-   nullifier to prevent double-spend, and creates a change-note
-   commitment if the withdrawal amount is less than the note's
-   full value).
+These flows do not require trusting the matching API.
 
 ### Client → TEE
 
-Three interactions, all via HTTPS + JWT bearer auth:
+API interactions are user-facing and documented by `docs/tee-api-openapi.yaml`:
 
-1. **`POST /auth/token`** — Exchange `(api_key, api_secret, passphrase)`
-   for a short-lived JWT. Operational layer; gives the TEE an
-   account-level identity for rate-limiting.
-
-2. **`POST /orders`** — Submit a signed order intent. The signature
-   is over a canonical body (see
-   [api-and-integration](./api-and-integration.md)) using the
-   trading-key Ed25519 keypair.
-
-3. **`DELETE /orders/{id}`**, **`GET /orders/{id}`**,
-   **`GET /settlement/status/{batch_id}`** — Cancel an order,
-   query order state, poll settle progress.
+1. **Verify** — `GET /attestation`, `GET /info`, and `/evidences/*`.
+2. **Authenticate** — `POST /auth/token`.
+3. **Trade** — `POST /orders`, `DELETE /orders/{order_id}`, `POST /orders/mass-quote`.
+4. **Monitor** — `GET /orders/{order_id}`, `GET /account`, `GET /settlement/status/{batch_id}`.
+5. **Realtime** — `/v1/stream` WebSocket channels for orders, fills, account, settlement, and tree updates.
 
 ### TEE → Solana
 
-The five-transaction settle pipeline, one cycle per batch:
-
-| Tx | Instruction | What it does |
-|---|---|---|
-| **A** | `lock_note × 2` | Pins the buyer's and seller's input notes for the duration of settlement. Requires the user's VALID_INPUT proof (relayed by the TEE). |
-| **B** | `verify_match_batch` | Submits the TEE's VALID_MATCH_BATCH Groth16 proof + the batch Merkle root. Creates a `BatchValidityMarker` PDA the settle ix will consume. |
-| **C** | `createLookupTable` + `extendLookupTable` | Builds a per-batch Address Lookup Table holding the five derivable PDAs (`note_lock_a/b/e/f` + `batch_validity_marker`). Lets Tx D stay under the 1232-byte size cap. |
-| **D** | `tee_forced_settle_batched` | The atomic settle. Consumes both input notes, creates change notes (if any), transfers tokens between users' note values, and emits a `TradeSettled` event. Signed by the TEE's Ed25519 key over a canonical payload hash. |
-| **E** | `close_batch_validity_marker` | Reclaims the rent locked in the `BatchValidityMarker`. Closes the loop. |
-
-The five-tx structure is documented in detail in
-[settlement-pipeline](./settlement-pipeline.md).
+When a batch matches, the TEE submits settlement to Solana. Clients
+do not need to construct these transactions themselves; they track
+progress through `GET /settlement/status/{batch_id}` and verify the
+returned transaction signatures if needed.
 
 ---
 
@@ -223,13 +140,12 @@ user's device.
 |---|---|---|
 | Token custody | On-chain (vault SPL token accounts) | Solana enforces transfers atomically; the only authority is the vault program itself |
 | Merkle tree of note commitments | On-chain (vault state account) | Auditable by any observer; allows trustless withdraw without a centralized indexer |
-| Nullifier set | On-chain (per-nullifier PDA) | Double-spend prevention; allows withdraw checks to be a simple `init` constraint failure |
-| Order book | In-TEE (matcher's `OrderBook` struct) | Visible only to attested code; new orders enter via signed HTTPS; matched fills emit settle txs |
-| Per-account state | In-TEE (`AccountRegistry`) | Operational rate-limit and audit only — never a custody boundary |
-| Oracle prices | In-TEE (`OracleCache` populated by the oracle sync task) | Pyth VAA verified on entry; matcher reads on every tick |
-| Settle proofs | Generated in-TEE | The match data must stay private; the proof is what makes the settle trustless |
-| User spending key | Client-side only | Never sent over the wire; the SDK's `VALID_SPEND` prover uses it locally |
-| User trading key | Client-side only | Ed25519 sigs are made client-side; only the pubkey is in the order body |
+| Spent-note tracking | On-chain | Prevents double-spending |
+| Order book | In-TEE | Keeps order intent private until settlement |
+| Account/API session state | In-TEE | Enables rate limits, auth, order state, and WebSocket updates |
+| Tree mirror | In-TEE, verifiable against Solana | Faster account/proof reads for clients |
+| User spending key | Client-side only | Never sent to the API |
+| User trading key | Client-side only | Signs order intent without exposing custody keys |
 
 The pattern: **whatever needs to be trusted goes on-chain;
 whatever needs to be private goes in-TEE; whatever needs to remain
@@ -250,10 +166,6 @@ the user's secret stays on their device.**
   governance, threat model, what a malicious TEE can and cannot do.
 - [Settlement pipeline](./settlement-pipeline.md) — the five-tx
   batched flow, the 1232-byte size budget, the ALT story.
-- [API & integration](./api-and-integration.md) — wire contract,
-  authentication, order lifecycle, settlement status polling.
+- [API & integration](./api-and-integration.md) — endpoint groups,
+  authentication, order lifecycle, WebSocket channels, and settlement polling.
 
----
-
-*Last updated 2026-05-29.*
-</content>

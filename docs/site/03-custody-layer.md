@@ -1,6 +1,6 @@
 # The custody layer
 
-> The Solana `vault` program holds every dollar of TVL in Nyx. It
+> The Solana `vault` program holds every dollar of TVL in Darknyx. It
 > owns a single Merkle tree of UTXO note commitments, a nullifier
 > set, a consumed-note set, and the registered TEE pubkey. Every
 > withdraw requires a zero-knowledge proof; every settle requires
@@ -12,7 +12,7 @@
 
 ## The UTXO note model
 
-Nyx uses a UTXO model (similar to Zcash, Tornado Cash, or Aztec)
+Darknyx uses a UTXO model (similar to Zcash, Tornado Cash, or Aztec)
 rather than an account model. Funds live in **notes**: opaque
 32-byte Poseidon commitments stored as leaves in a single global
 Merkle tree.
@@ -61,10 +61,8 @@ shifting the root).
 The tree is rebuilt on `reset_merkle_tree` (admin-only, used in
 dev to reset devnet state) and grows monotonically otherwise.
 Each `deposit` appends one leaf; each `tee_forced_settle_batched`
-appends up to four leaves (two new change notes per match, times
-up to N=16 matches per batch, but in the v3.5 batched flow each
-match appends only its own change notes — typically 0 or 2 per
-match).
+appends the change notes produced by each matched fill — typically
+0 or 2 leaves per match.
 
 Why depth 20: the deposit constraint count scales with tree
 depth, and depth 20 covers ~1M notes — sufficient for the next
@@ -122,16 +120,12 @@ Merkle root. Allocates a `BatchValidityMarker` PDA seeded by the
 batch root. The marker is **1:N** — one PDA per batch, covering
 all matches in the batch.
 
-The proof attests that for every slot in the batch:
-- The match's VALID_CREATE constraints hold (change notes correctly
-  derived from input notes' Poseidon openings).
-- The match's VALID_PRICE constraints hold (`quote = base × price`,
-  range checks on amounts).
-- The leaf hash construction matches the circuit's `MatchSlot()`
-  template byte-for-byte.
+The proof attests that every matched slot conserves value, derives
+the correct change notes, binds the clearing price, and matches the
+batch leaf committed on-chain.
 
 VALID_MATCH_BATCH is the single most cryptographically expensive
-component in Nyx. It's currently instantiated at N=16 matches per
+component in Darknyx. It's currently instantiated at N=16 matches per
 proof; ~163,000 constraints; uses pot18 (the 2^18 PowersOfTau
 ceremony output).
 
@@ -228,7 +222,7 @@ already spent at the time of proof generation.
 
 ## Per-mint outstanding counter
 
-Added in the v2 hardening (PR v2). `VaultConfig.outstanding[mint]`
+`VaultConfig.outstanding[mint]`
 tracks how much of each token the vault holds in active notes
 (deposits minus withdraws). The settle ix sanity-checks against
 this counter: a settle that would move more tokens out than the
@@ -238,29 +232,6 @@ This is defense in depth. If the matching proof somehow accepted a
 malformed match that violated conservation (e.g., transferred 1M
 USDC when only 500K was deposited), the outstanding check catches
 it before any tokens move.
-
----
-
-## The v3.5 batched validity hardening
-
-Nyx is currently on **v3.5** — the batched-validity migration that
-landed in early 2026. The progression:
-
-| Version | What it added |
-|---|---|
-| v1 | Original hackathon submission. PER-based matching. Per-match validity proofs. |
-| v2 | VALID_INPUT proof at lock time + `NoteLock.token_mint` binding + `MAX_LOCK_TTL_SLOTS` cap + `outstanding[mint]` counter. |
-| v3 | VALID_CREATE proof for change-note construction + `ValidCreateMarker` PDA. |
-| v3.1 | VALID_PRICE proof for clearing-price commitment + `ValidPriceMarker` PDA + v0 transactions + ALT migration. |
-| **v3.5 (current)** | **VALID_MATCH_BATCH (N=16) + `BatchValidityMarker` (1:N) + `tee_forced_settle_batched` + `close_batch_validity_marker`. Phase 1c-hard complete: v3.1 per-match settle path removed entirely.** |
-
-The v3.5 batched flow reduces per-match overhead by roughly 10×
-compared to v3.1 (one Groth16 verify per batch instead of one per
-match) while keeping the per-match settle transaction itself
-sub-1232 bytes. The migration log is in
-`docs/v3.5-migration.md` for engineering reference.
-
----
 
 ## Failure modes the on-chain code defends against
 
@@ -284,22 +255,14 @@ each defense ultimately rests on.
 
 ---
 
-## What's coming
+## Operational posture
 
-The custody layer is stable. The recent PRs landing in the TEE v2
-workstream don't touch the on-chain code at all — they're moving
-the matching layer from MagicBlock PER to a dedicated TDX CVM.
-The vault program will see a TEE-pubkey rotation when the v2 CVM
-goes live (the existing v1 PER attestation will be replaced by the
-v2 TDX attestation), but the vault's instructions, state, and
-verifier code stay the same.
+The custody layer is intentionally stable: it holds funds, tracks
+notes, prevents double-spends, and accepts settlement only from the
+registered TEE key. Matching and API changes should not require
+users to trust a different custody model.
 
-The next custody-layer change planned is a deferred upgrade-
-authority removal for mainnet — once the upgrade authority is
-permanently null, the vault becomes truly immutable.
+The next custody-layer hardening step is deferred upgrade-authority
+removal for mainnet. Once the upgrade authority is permanently
+null, the vault becomes immutable.
 
----
-
-*Last updated 2026-05-29. Source of truth:
-`programs/vault/src/`, `CRYPTOGRAPHY.md`, `docs/v3.5-migration.md`.*
-</content>

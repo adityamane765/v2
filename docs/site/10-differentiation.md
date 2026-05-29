@@ -1,6 +1,6 @@
 # Differentiation
 
-> What makes Nyx different from existing on-chain order books,
+> What makes Darknyx different from existing on-chain order books,
 > dark pools, and privacy protocols. Honest comparisons against
 > the closest competitors, with the trade-offs each design makes
 > spelled out.
@@ -19,42 +19,9 @@ different trade-offs across three axes:
 3. **Trust model** — what you have to trust (an operator? an
    MPC quorum? a TEE? a cryptographic primitive?)
 
-The closest comparables to Nyx are below. Each is summarized
-honestly, including what each does better than Nyx, before the
-comparison swings to where Nyx differentiates.
-
----
-
-## vs MagicBlock Permission Group Ephemeral Rollup (PER)
-
-**What PER is.** A short-lived Solana rollup operated by MagicBlock
-for permission-group use cases. Nyx v1 ran on PER for matching;
-the TEE v2 migration is moving off of it.
-
-**What PER does well:**
-- Native Solana tooling (uses standard Anchor programs)
-- Free or cheap (MagicBlock subsidizes)
-- Familiar deployment model (deploy a program; it runs on the
-  rollup)
-
-**Why we left PER:**
-- **Attestation chain.** PER's privacy guarantee rests on
-  MagicBlock's own infrastructure, not on a hardware root of
-  trust. There's no publicly-verifiable "this is the binary that
-  ran" the way TDX gives you.
-- **Trust assumptions are stacked.** Users trust MagicBlock to run
-  the rollup honestly, AND trust the rollup's delegation
-  choreography, AND trust the cross-rollup attestation path.
-  Each layer is one more piece to audit.
-- **Complexity.** The PER design adds delegate/undelegate
-  transitions for orders crossing the rollup boundary. The TEE
-  v2 design has no rollup boundary; matching is a single Rust
-  process, settle is direct on-chain.
-
-**Honestly:** PER is the right choice for projects that need
-permission-group rollup semantics but don't have the resources to
-operate a TDX CVM. For Nyx specifically, the trust-chain
-simplification of moving to TDX outweighs the operational cost.
+The closest comparables to Darknyx are below. Each is summarized
+honestly, including what each does better than Darknyx, before the
+comparison swings to where Darknyx differentiates.
 
 ---
 
@@ -62,31 +29,31 @@ simplification of moving to TDX outweighs the operational cost.
 
 **What godarkdex is.** A privacy-preserving CLOB-style darkpool
 built by the GoDarkDex team, also on Solana, also using a TEE for
-matching. The closest peer-competitor to Nyx by architectural shape.
+matching. The closest peer-competitor to Darknyx by architectural shape.
 
 **What godarkdex does well:**
 - Mature production deployment
 - Same TEE + ZK + UTXO architectural pattern (so the trust story
   is broadly similar)
-- Active liquidity in production today (Nyx is pre-launch)
+- Active liquidity in production today (Darknyx is pre-launch)
 
-**Where Nyx differentiates:**
+**Where Darknyx differentiates:**
 
-| Dimension | godarkdex | Nyx |
+| Dimension | godarkdex | Darknyx |
 |---|---|---|
 | Attestation chain | TEE quote → verifying service | TEE quote → Intel TCB (direct, via dcap-qvl) |
 | Multisig governance scope | TEE operations | TEE pubkey only (vault is non-upgradeable post-launch) |
 | Matching algorithm | Continuous matching | Frequent-batch auction (no front-running within a batch) |
-| Settlement | Per-match | v3.5 batched (one Groth16 per N matches; ~10× cheaper) |
-| ZK circuit budget | VALID_CREATE + VALID_PRICE per match | VALID_MATCH_BATCH (N=16) bundles all per-match constraints |
+| Settlement | Per-match | Batched settlement proofs with cheaper per-fill execution |
+| ZK circuit budget | Per-match proof overhead | VALID_MATCH_BATCH bundles matched-fill validity checks |
 | Open-source visibility | Limited (audit-driven release) | Fully open (this monorepo is the production code) |
 
-**Honestly:** godarkdex is a real production system; Nyx is an
+**Honestly:** godarkdex is a real production system; Darknyx is an
 infrastructure play that explicitly takes some godarkdex
 architectural patterns (the three-key identity model, the TEE-
 based matching) and extends them with batched validity proofs and
 a more rigorous attestation chain. The differentiation is in the
-v3.5 economics + the trust model, not in being first to the idea.
+settlement design and trust model, not in being first to the idea.
 
 ---
 
@@ -102,9 +69,9 @@ order plaintext, but matching happens inside the MPC.
 - Mature MPC implementation
 - Strong privacy properties (operator sees no order data)
 
-**Where Nyx differentiates:**
+**Where Darknyx differentiates:**
 
-| Dimension | Renegade | Nyx |
+| Dimension | Renegade | Darknyx |
 |---|---|---|
 | Matching speed | MPC matching: ~100ms-1s per match | TEE matching: <1ms per match |
 | Throughput ceiling | Bounded by MPC round complexity | Bounded by Solana tx throughput |
@@ -117,7 +84,7 @@ order plaintext, but matching happens inside the MPC.
 in the space — the trust model is one MPC quorum + Ethereum.
 Their performance ceiling is the practical limit of 2-party MPC,
 which means Renegade is best suited for low-frequency, high-
-value trades. Nyx's TEE approach trades a small amount of
+value trades. Darknyx's TEE approach trades a small amount of
 hardware trust for matching speed that's two orders of magnitude
 faster — better for active markets, worse for "I will never
 trust hardware" users.
@@ -139,9 +106,9 @@ shipped today.
 - Sovereign chain — full control over protocol economics
 - Strong cryptography focus
 
-**Where Nyx differentiates:**
+**Where Darknyx differentiates:**
 
-| Dimension | Penumbra | Nyx |
+| Dimension | Penumbra | Darknyx |
 |---|---|---|
 | Privacy scope | Whole chain (every action) | Order intent + position privacy on Solana |
 | L1 | Penumbra (sovereign Cosmos chain) | Solana |
@@ -150,12 +117,12 @@ shipped today.
 | TEE usage | None | Required (TDX for matching) |
 
 **Honestly:** Penumbra is solving a different problem — building a
-private financial L1 from scratch. Nyx is solving the problem of
+private financial L1 from scratch. Darknyx is solving the problem of
 "how do I get private order-book trading on the L1 my users are
 already on (Solana)." Different scopes; different trade-offs.
 
 For traders who care about privacy AND want USDC/SOL liquidity,
-Nyx is the answer. For traders who want a fully-private financial
+Darknyx is the answer. For traders who want a fully-private financial
 chain and are willing to bridge in/out, Penumbra is the answer.
 
 ---
@@ -165,14 +132,14 @@ chain and are willing to bridge in/out, Penumbra is the answer.
 **What centralized exchanges do well:**
 - Fast (sub-millisecond matching)
 - Deep liquidity (the established players have order-book depth
-  Nyx will not match for years)
+  Darknyx will not match for years)
 - Full feature set (margin, futures, options, structured products)
 - Familiar trader UX
 
-**What Nyx does better:**
+**What Darknyx does better:**
 - **Custody risk = 0.** No operator holds your funds; the vault
   program does, and only ZK proofs move funds.
-- **No KYC.** Nyx's identity model is cryptographic, not
+- **No KYC.** Darknyx's identity model is cryptographic, not
   documentary. No selfie required; no documents in someone's
   database to be subpoenaed or stolen.
 - **Operator front-running = 0.** The TEE can't see your orders.
@@ -181,10 +148,10 @@ chain and are willing to bridge in/out, Penumbra is the answer.
   rotation.
 
 **The honest take:** Centralized exchanges win on user
-experience and liquidity. Nyx wins on trust, custody, and
+experience and liquidity. Darknyx wins on trust, custody, and
 operator-risk. For a retail user trading $1k in jiffies,
 Coinbase is fine. For an institution moving $10M positions
-without leaking intent, Nyx is the right tool.
+without leaking intent, Darknyx is the right tool.
 
 ---
 
@@ -195,9 +162,9 @@ without leaking intent, Nyx is the right tool.
 - Programmable risk parameters
 - Some are very liquid (dYdX has institutional flow)
 
-**Where Nyx differentiates:**
+**Where Darknyx differentiates:**
 
-| Dimension | Decentralized perps | Nyx |
+| Dimension | Decentralized perps | Darknyx |
 |---|---|---|
 | Order book privacy | Public (all see) | Hidden (only TEE) |
 | MEV exposure | High (orders are public, sandwich-able) | Zero within a batch (uniform price) |
@@ -206,7 +173,7 @@ without leaking intent, Nyx is the right tool.
 
 **Honestly:** The decentralized perp protocols solved custody but
 not privacy. Their order books are public; sophisticated traders
-can read intent and front-run. Nyx solves the privacy problem
+can read intent and front-run. Darknyx solves the privacy problem
 that decentralized perps left open. We don't compete with them on
 perp trading today (spot only), but the design extends naturally
 to perp matching (the matching engine is asset-class-agnostic;
@@ -215,18 +182,18 @@ checks).
 
 ---
 
-## What makes Nyx defensible
+## What makes Darknyx defensible
 
 When investors ask "what's the moat?", three honest answers:
 
-### 1. The composability of the v3.5 batched flow
+### 1. Batched private settlement
 
-The v3.5 design — N=16 matches per Groth16 proof, with a per-
-match settle that only verifies an inclusion path — is genuinely
-novel. Most projects in this space either do per-match proofs
-(expensive) or skip the on-chain proof entirely (centralized).
-The batched approach is a 10× reduction in per-match settle
-cost without sacrificing trustless verification.
+Darknyx uses batched validity proofs with per-match settlement that
+only needs to verify a compact inclusion path and TEE signature.
+Most projects in this space either do per-match proofs (expensive)
+or skip on-chain proof checks entirely (centralized). The batched
+approach reduces per-fill settlement cost without sacrificing
+verifiable execution.
 
 Replicating it requires:
 - Designing a circuit that bundles N validity constraints into
@@ -238,19 +205,12 @@ Replicating it requires:
 
 Each piece is doable in isolation; the integration is the moat.
 
-### 2. The byte-equality discipline
+### 2. End-to-end cryptographic consistency
 
-Three implementations (Rust host, Rust BPF, TypeScript browser) all
-agreeing on every cryptographic byte is harder than it sounds. We
-enforce it via CI parity tests; every refactor that touches a
-Poseidon arity or a domain tag MUST update both sides + the
-parity test in the same commit. The discipline is documented in
-CLAUDE.md and reflected in test infrastructure that doesn't exist
-in most peer projects.
-
-A clone trying to fork our work would either inherit this
-discipline (slow) or skip it (cause cryptographic bugs that
-silently lock funds).
+The SDK, TEE, and on-chain verifier all agree on the same note,
+nullifier, proof, and settlement formats. That consistency is what
+lets users create proofs locally, submit private orders, and settle
+fills on-chain without revealing sensitive trading data.
 
 ### 3. The trust model rigor
 
@@ -265,10 +225,9 @@ This isn't a "first-mover" moat — the architecture is replicable.
 It's a "we did the homework" moat. The next team building a TEE-
 based dark pool will look at our docs, our circuit set, our
 ceremony procedures, and start from a much higher floor than we
-did. That's good for the ecosystem; for Nyx specifically, the
-moat is the next round of design work (the v3 on-chain DCAP
-verifier, the persistence layer, the cross-margining model) that
-the team is already executing on.
+did. That's good for the ecosystem; for Darknyx specifically, the
+moat is the next round of design work around stronger attestation,
+resilient matching infrastructure, and richer portfolio-aware risk.
 
 ---
 
@@ -276,15 +235,10 @@ the team is already executing on.
 
 | Project | Privacy | Trust model | L1 | Status |
 |---|---|---|---|---|
-| **Nyx** | Order intent, position, trader identity | Intel TDX + Solana + Wormhole | Solana | TEE v2 in flight |
-| MagicBlock PER | Permission-group rollup | MagicBlock infra | Solana | Production |
+| **Darknyx** | Order intent, position, trader identity | Intel TDX + Solana + Wormhole | Solana | TDX rollout |
 | godarkdex | Order intent, position | TEE (single-vendor attestation) | Solana | Production |
 | Renegade | Order intent, position | 2-party MPC | Ethereum | Production |
 | Penumbra | All on-chain state | zk-SNARKs (pure crypto) | Penumbra (Cosmos) | Production |
 | Centralized exchanges | None (operator sees all) | Operator | N/A | Production |
 | Decentralized perps | None (public order books) | Smart contract | Various | Production |
 
----
-
-*Last updated 2026-05-29.*
-</content>

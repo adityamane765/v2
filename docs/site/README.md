@@ -1,4 +1,4 @@
-# Nyx documentation portal — content source
+# Darknyx documentation portal — content source
 
 This directory holds the **public-facing documentation portal**
 content. The other docs at the repo root and `docs/` (e.g.
@@ -6,7 +6,7 @@ content. The other docs at the repo root and `docs/` (e.g.
 `tee-attestation-flow.md`) are engineer-facing reference material;
 this directory is the curated, narrative-led version meant for
 investors, partners, integrators, and serious technical readers
-encountering Nyx for the first time.
+encountering Darknyx for the first time.
 
 ---
 
@@ -36,16 +36,16 @@ Each file is a self-contained page that:
 
 | # | File | Purpose |
 |---|---|---|
-| 01 | `introduction.md` | Vision, problem, who Nyx is for, headline architecture |
+| 01 | `introduction.md` | Vision, problem, who Darknyx is for, headline architecture |
 | 02 | `architecture-overview.md` | The three-layer model + system map |
 | 03 | `custody-layer.md` | The Solana vault, notes, Merkle tree, on-chain state |
 | 04 | `matching-layer.md` | In-TEE matcher, oracle, order book, why TEE |
 | 05 | `cryptography.md` | Keys, note system, ZK circuits, replay protection |
 | 06 | `trust-model.md` | Attestation, multisig rotation, threat model |
-| 07 | `settlement-pipeline.md` | The five-transaction v3.5 batched flow |
+| 07 | `settlement-pipeline.md` | The five-transaction batched settlement flow |
 | 08 | `api-and-integration.md` | Wire contract, auth model, order lifecycle |
-| 09 | `roadmap-and-status.md` | Shipped vs in-flight vs future, the six v2 decisions |
-| 10 | `differentiation.md` | Vs MagicBlock PER, godarkdex, Renegade, Penumbra |
+| 09 | `roadmap-and-status.md` | Public roadmap and development status |
+| 10 | `differentiation.md` | Vs godarkdex, Renegade, Penumbra, CEXs, and public order books |
 | 11 | `glossary.md` | Terms + acronyms |
 
 ---
@@ -88,9 +88,7 @@ targets without further tagging.
   MDX agent will rewrite them to the site's internal routing).
 - **Code blocks** show real on-chain types / function signatures
   where they aid the explanation; nothing here is invented.
-- **Numbers are real.** Constraint counts, transaction sizes,
-  decision dates — all match the source code as of the date in
-  the page footer.
+- **Numbers are real.** Constraint counts and transaction sizes
+  should match the current implementation.
 - **No emojis** in the prose. The MDX site can add icons as part
   of theming if desired.
-</content>

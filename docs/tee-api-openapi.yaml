@@ -1,7 +1,7 @@
 openapi: 3.1.0
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Nyx TEE v2 — API contract
+# Darknyx TEE v2 — API contract
 #
 # Wire contract for the dedicated-TEE matching layer that replaces the
 # MagicBlock-PER-based one in v2. Read this with:
@@ -44,22 +44,22 @@ openapi: 3.1.0
 # ─────────────────────────────────────────────────────────────────────────────
 
 info:
-  title: Nyx TEE v2 API
+  title: Darknyx TEE v2 API
   version: 2.0.0-draft
   description: |
-    Public + authenticated REST and WebSocket API for the Nyx dark pool
+    Public + authenticated REST and WebSocket API for the Darknyx dark pool
     TEE matching layer. Pairs with the v2 on-chain custody program
     (vault, program ID `C63vKvysCzX55PKraas4Wc22ijqjGJQdPC1mrzCFVWZx`).
   contact:
-    name: Nyx engineering
-    url: https://github.com/Nyx-Privacy/nyx
+    name: Darknyx engineering
+    url: https://github.com/Darknyx-Privacy/darknyx
   license:
     name: Apache-2.0
 
 servers:
-  - url: https://api.nyx.example.com/api/v1
+  - url: https://api.darknyx.example.com/api/v1
     description: Mainnet (TBD — Phala dstack)
-  - url: https://api.devnet.nyx.example.com/api/v1
+  - url: https://api.devnet.darknyx.example.com/api/v1
     description: Devnet (TBD — Phala dstack devnet)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ tags:
     description: |
       TEE attestation quote retrieval + RA-TLS evidence bundle. Verify
       before any sensitive write. The /evidences/* endpoints under
-      this tag are served by dstack-ingress, not by nyx-tee directly,
+      this tag are served by dstack-ingress, not by darknyx-tee directly,
       but they're documented here for client-side completeness.
   - name: info
     description: |
@@ -212,7 +212,7 @@ components:
       description: |
         Application + instance metadata, returned by GET /info.
         Mirrors what dstack-sdk `client.info()` returns plus a
-        couple of Nyx-specific fields. Used in tandem with
+        couple of Darknyx-specific fields. Used in tandem with
         /attestation by the SDK's verifyTeeAttestation() helper.
       required: [app_id, instance_id, compose_hash, tcb_info, tee_pubkey]
       properties:
@@ -245,7 +245,7 @@ components:
           description: Base58 Ed25519 pubkey (same as in AttestationQuote).
         nyx_version:
           type: string
-          description: Semver tag of the nyx-tee build (e.g. v0.4.2).
+          description: Semver tag of the darknyx-tee build (e.g. v0.4.2).
 
     RaTlsEvidence:
       type: object
@@ -750,7 +750,7 @@ paths:
   /evidences/quote.json:
     get:
       tags: [attestation]
-      summary: (Served by dstack-ingress, not nyx-tee) TDX quote bundle.
+      summary: (Served by dstack-ingress, not darknyx-tee) TDX quote bundle.
       description: |
         Static evidence file. Part of the RA-TLS verification chain;
         see docs/tee-attestation-flow.md §4.1. SHA-256 of this file

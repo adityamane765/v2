@@ -29,22 +29,30 @@ but BN254 is the right choice today.
 
 ## The key derivation chain
 
-Each Nyx user maintains four distinct keys, derived in a chain
+Each Darknyx user maintains four distinct keys, derived in a chain
 from a single seed:
 
 ```mermaid
-flowchart TB
-  WALLET["Solana Wallet Keypair (Ed25519)<br/>deterministic seed source"]
-  SPEND["Spending Key (32-byte Fr scalar)<br/>Used in VALID_SPEND for note ownership<br/>Never sent to the TEE"]
-  VIEW["Viewing Key (32-byte Fr scalar)<br/>Decrypts per-note nonce/blinding memo data"]
-  TRADE["Trading Key (Ed25519 keypair)<br/>Signs order bodies sent to the TEE"]
-  ROOT["Root Key (32-byte Fr scalar)<br/>Salt source for per-note r_owner randomness"]
+flowchart LR
+  WALLET["Wallet"]
+  SPEND["Spending"]
+  VIEW["Viewing"]
+  TRADE["Trading"]
+  ROOT["Root"]
 
-  WALLET -->|"HKDF-SHA256(seed, label='nyx.spending.v1')"| SPEND
-  SPEND -->|"HKDF-SHA256(seed, label='nyx.viewing.v1')"| VIEW
-  VIEW -->|"HKDF-SHA256(seed, label='nyx.trading.v1')"| TRADE
-  TRADE -->|"HKDF-SHA256(seed, label='nyx.root.v1')"| ROOT
+  WALLET -->|"darknyx.spending.v1"| SPEND
+  WALLET -->|"darknyx.viewing.v1"| VIEW
+  WALLET -->|"darknyx.trading.v1"| TRADE
+  WALLET -->|"darknyx.root.v1"| ROOT
 ```
+
+| Key | Type | Purpose |
+|---|---|---|
+| Wallet | Ed25519 | Deterministic seed source and Solana transaction signer |
+| Spending | 32-byte field scalar | Proves note ownership; never sent to the TEE |
+| Viewing | 32-byte field scalar | Decrypts note memo data for portfolio recovery |
+| Trading | Ed25519 keypair | Signs orders sent to the TEE |
+| Root | 32-byte field scalar | Derives per-note owner randomness |
 
 The four-key separation is what makes the privacy properties work:
 
@@ -184,23 +192,16 @@ The implementations:
 | In-circuit (Groth16 witness) | `circomlib`'s Poseidon template | The above two (via parity tests) |
 | In-browser TypeScript | `circomlibjs` (JavaScript port of circomlib) | Host-side Rust (via the SDK's `poseidon-parity.test.ts`) |
 
-The byte-equality property is enforced by a CI gate that runs
-shell-out parity tests for every Poseidon use case (arity 2, 3,
-5, 6, 7, 9, 12). Any deviation in any of these implementations
-fails CI before reaching production.
-
-CLAUDE.md §6 is the engineer's reference for the parity contracts;
-the test files are under `packages/sdk/tests/poseidon-parity.test.ts`
-and similar.
+The byte-equality property is enforced by automated parity checks
+for every Poseidon use case used by the protocol.
 
 ---
 
-## The six ZK circuits
+## The core ZK checks
 
-Nyx uses six distinct Groth16 circuits, each enforcing a different
-invariant. All six are written in Circom 2.x, compiled with
-snarkjs, and have their verification keys baked into the on-chain
-verifier (the constants in `programs/vault/src/zk/vk_*.rs`).
+Darknyx uses Groth16 proofs to enforce custody and settlement rules
+without revealing private note data. For users and integrators, the
+important checks are:
 
 ### 1. VALID_WALLET_CREATE
 
@@ -223,33 +224,11 @@ the note's full value). Includes a Merkle inclusion path against
 a recent root. ~3,200 constraints (dominated by the
 depth-20 Merkle path).
 
-### 4. VALID_CREATE (deprecated in v3.5)
+### 4. VALID_MATCH_BATCH
 
-Proved change-note construction was correctly derived from input
-notes. Folded into VALID_MATCH_BATCH in v3.5. ~150 constraints
-per match.
-
-### 5. VALID_PRICE (deprecated in v3.5)
-
-Proved the clearing-price commitment was correctly bound. Folded
-into VALID_MATCH_BATCH in v3.5. ~200 constraints per match.
-
-### 6. VALID_MATCH_BATCH
-
-The big one. Proves all of VALID_CREATE + VALID_PRICE for every
-slot in a batch of N matches. Parameterised over N ∈ {2, 4, 16};
-N=16 is the production wired instantiation. The single public
-input is the Merkle root over the per-slot leaves (computed
-inside the circuit). ~163,000 constraints at N=16 — requires the
-pot18 PowersOfTau ceremony.
-
-The batched circuit replaces what was a per-match
-`verify_valid_create` + `verify_valid_price` + per-match
-`tee_forced_settle` flow with a single batched verify + per-match
-`tee_forced_settle_batched`. The savings: instead of one Groth16
-verify per match (~3M compute units each), one verify per batch
-(spread across up to 16 matches). The per-match settle ix only
-verifies a Merkle inclusion path + a TEE signature — cheap.
+Proves a matched batch is valid before settlement lands on-chain.
+The proof binds the batch to a Merkle root, and settlement consumes
+that root when finalizing matched fills.
 
 ---
 
@@ -263,7 +242,6 @@ position 0 of the input:
 | 1 | User commitment (`Poseidon2`) |
 | 2 | Note commitment (`Poseidon7`) |
 | 3 | Nullifier (`Poseidon2`) |
-| 4 | Price commitment (`Poseidon4`) — legacy v3.1 |
 | 20 | VALID_MATCH_BATCH leaf inner hash (`Poseidon12`) |
 | 21 | VALID_MATCH_BATCH leaf top hash (`Poseidon9`) |
 | 22 | VALID_MATCH_BATCH internal Merkle node (`Poseidon3`) |
@@ -298,46 +276,9 @@ state being consumed. The Solana runtime's "account already in use"
 error path catches replay attempts without the program code having
 to track its own seen-set.
 
----
-
-## Cross-language byte-equality contracts
-
-The privacy properties only work if all three environments (Rust
-on host, Rust on Solana BPF, TypeScript in browsers) agree on
-every byte of every hash, key, and commitment. If they disagree,
-one of two things happens:
-
-1. **Funds get permanently locked.** A user generates a withdraw
-   proof against a commitment computed by the SDK; the on-chain
-   verifier recomputes the commitment differently; the proof
-   doesn't satisfy the constraint; the withdraw fails. The note's
-   value is unspendable.
-
-2. **Funds get stolen.** Less likely (the SDK's witness has to
-   somehow produce a valid-looking proof for a different
-   commitment), but the consequence is worse.
-
-The byte-equality enforcement:
-
-| Contract | Rust side | TS side | Test |
-|---|---|---|---|
-| Poseidon arities | `crates/darkpool-crypto/src/poseidon.rs` | `packages/sdk/src/zk/poseidon.ts` | `poseidon-parity.test.ts` (shells out to a Rust helper binary) |
-| Note commitment | `crates/darkpool-crypto/src/note.rs` | `packages/sdk/src/utxo/note.ts` | `note-commitment-parity.test.ts` |
-| Nullifier | `crates/darkpool-crypto/src/nullifier.rs` | `packages/sdk/src/utxo/nullifier.ts` | `nullifier-parity.test.ts` |
-| Key derivation | `crates/darkpool-crypto/src/keys.rs` | `packages/sdk/src/keys/key-generators.ts` | `keys-parity.test.ts` |
-| User commitment | `crates/darkpool-crypto/src/user_commitment.rs` | `packages/sdk/src/keys/user-commitment.ts` | `user-commitment-parity.test.ts` |
-| Canonical payload hash | `programs/vault/src/instructions/tee_forced_settle.rs` | `packages/sdk/src/settlement/settle-builder.ts` | Rust `canonical_payload_hash_fixed_vector` + TS `settle-builder-batched.test.ts` |
-| Match leaf hash (v3.5) | `programs/vault/src/instructions/tee_forced_settle_batched.rs` | `packages/sdk/tests/helpers/match-batch-prover.ts` | `match-batch-prototype.test.ts` |
-
-Every cross-language hash change requires updating both sides AND
-the parity test, in the same commit. CI rejects any PR where the
-parity tests fail. CLAUDE.md §6 documents the rule.
-
----
-
 ## A note on quantum
 
-Like every other production SNARK system, Nyx's cryptography is
+Like every other production SNARK system, Darknyx's cryptography is
 not quantum-resistant. BN254 elliptic-curve operations break under
 Shor's algorithm; Ed25519 signatures break under the same; Poseidon
 itself is fine (it's a hash, not a key-exchange primitive), but
@@ -345,17 +286,11 @@ the public-key operations it sits inside are not.
 
 The state of the art for post-quantum SNARKs (lattice-based,
 hash-based) does not yet have BPF-friendly verifiers comparable to
-`groth16-solana`. We track this space and have a migration plan
-sketched (BLS12-381 first as an intermediate; lattice systems if
-they mature), but no migration is on the near roadmap.
+`groth16-solana`. We track this space and have an upgrade path in
+mind if practical post-quantum proving systems become viable for
+Solana.
 
-The mitigating factor: any user holding Nyx-deposited funds can
+The mitigating factor: any user holding Darknyx-deposited funds can
 withdraw at any time, well before a credible quantum threat
 emerges. No long-term funds are required to sit in the protocol.
 
----
-
-*Last updated 2026-05-29. Source of truth: `CRYPTOGRAPHY.md`,
-`crates/darkpool-crypto/`, `programs/vault/src/zk/`,
-`circuits/templates/`.*
-</content>

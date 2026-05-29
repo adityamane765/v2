@@ -1,6 +1,6 @@
 # Trust model
 
-> Nyx's matching layer runs inside an Intel TDX Confidential VM
+> Darknyx's matching layer runs inside an Intel TDX Confidential VM
 > whose compiled image is pinned on Solana through a multisig-
 > governed rotation ceremony. Clients verify the enclave's
 > attestation chain against Intel's TCB root before trusting any
@@ -41,7 +41,7 @@ When we say "you trust the TEE," we mean exactly five things:
 
 What you do NOT have to trust:
 
-- ❌ The Nyx team to not front-run your orders. (The TEE doesn't
+- ❌ The Darknyx team to not front-run your orders. (The TEE doesn't
   let them see orders.)
 - ❌ The TEE operator (Phala) to not exit your funds. (The on-chain
   vault doesn't accept TEE-signed withdraws; only user-generated
@@ -140,10 +140,9 @@ Each of these triggers a multisig rotation:
    - Any user can independently re-run the verification chain
 ```
 
-The ceremony is documented in detail at `docs/tee-attestation-flow.md`
-§5. The first production rotation will be the cutover from the v1
-PER attestation to the v2 TDX attestation, scheduled for the end
-of the TEE v2 workstream.
+The important property is that every key rotation is explicit,
+observable, and independently reproducible. Clients can re-run the
+attestation checks after a rotation before sending new order intent.
 
 ---
 
@@ -151,7 +150,7 @@ of the TEE v2 workstream.
 
 We model the following adversaries:
 
-### Adversary A: Malicious Nyx operator (the worst-case "insider")
+### Adversary A: Malicious Darknyx operator (the worst-case "insider")
 
 **Capabilities:**
 - Controls the Docker image build pipeline
@@ -216,10 +215,10 @@ We model the following adversaries:
 - Can produce a fork
 
 **What they CAN do:**
-- Censor specific Nyx transactions (yes — but Solana's leader
+- Censor specific Darknyx transactions (yes — but Solana's leader
   rotation means censorship costs the validator their slot
   share; not sustainable for systemic censorship)
-- Reorder Nyx transactions in their block (yes — but the matched
+- Reorder Darknyx transactions in their block (yes — but the matched
   clearing price is computed inside the TEE; reordering doesn't
   let them improve their own fill)
 
@@ -286,7 +285,7 @@ withdraw via VALID_SPEND.
 
 ## The "deposit-first, ask-questions-later" property
 
-Nyx's trust model has a useful structural property: deposit
+Darknyx's trust model has a useful structural property: deposit
 risk is **zero**, because deposits don't involve the TEE at all.
 
 A user who deposits funds:
@@ -300,7 +299,7 @@ The TEE only enters the picture when the user wants to trade.
 A user who deposits but doesn't trade has zero TEE exposure;
 their funds are safe even if the TEE is fully compromised.
 
-This shape lets users adopt Nyx incrementally. Open an account,
+This shape lets users adopt Darknyx incrementally. Open an account,
 deposit, see if you like the architecture, withdraw at any time.
 Only when you submit your first order does any of the TEE trust
 chain become load-bearing for you.
@@ -315,7 +314,7 @@ chain become load-bearing for you.
 | **Centralized exchange (CEX)** | Fast, cheap | Full custody risk; operator can front-run; jurisdiction risk |
 | **Off-chain matching with on-chain settlement (Renegade)** | Privacy via MPC | MPC matching is slow at scale; n-party trust assumption (currently 2-party) |
 | **MEV-resistant rollup (commit-reveal, encrypted mempool)** | On-chain auditability | Commit-reveal has front-running windows; encrypted mempool needs threshold cryptography |
-| **TEE-based dark pool (Nyx)** | Privacy + speed; no n-party MPC; trustless settle | Intel TDX trust; multisig governance trust |
+| **TEE-based dark pool (Darknyx)** | Privacy + speed; no n-party MPC; trustless settle | Intel TDX trust; multisig governance trust |
 
 The TEE trust model is the closest thing to "have your cake and
 eat it too." It trades a small amount of hardware trust (Intel's
@@ -350,9 +349,3 @@ trust(Intel TDX hardware) + trust(Wormhole guardians)
 "multisig + intel + wormhole + ..." chain. The roadmap calls this
 "on-chain DCAP" and tracks it as a separate workstream.
 
----
-
-*Last updated 2026-05-29. Source of truth:
-`docs/tee-attestation-flow.md`, `docs/tee-architecture.md`,
-`programs/vault/src/instructions/`.*
-</content>
