@@ -7,12 +7,12 @@ export function CtaSection() {
   return (
     <section
       className="relative isolate border-t py-20 sm:py-24"
-      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+      style={{ borderColor: "rgba(10,10,13,0.08)" }}
     >
       <div className="mx-auto max-w-5xl px-5 text-center sm:px-7">
         <NyxMark size={56} className="mx-auto nyx-drift" style={{ color: "var(--nyx-accent)" }} />
         <h2
-          className="mt-7 font-mono font-semibold leading-tight tracking-[-0.02em]"
+          className="mt-7 font-sans font-semibold leading-tight tracking-[-0.02em]"
         >
           <span
             className="block"
@@ -22,21 +22,21 @@ export function CtaSection() {
           </span>
           <span
             className="mt-2 block"
-            style={{ fontSize: "clamp(18px, 2.5vw, 28px)", color: "rgba(174,172,176,0.5)" }}
+            style={{ fontSize: "clamp(18px, 2.5vw, 28px)", color: "rgb(87,83,78)" }}
           >
             {cta.titleMuted}
           </span>
         </h2>
         <p
-          className="mx-auto mt-5 max-w-lg font-mono text-[12px] leading-[1.85]"
-          style={{ color: "rgba(174,172,176,0.55)" }}
+          className="mx-auto mt-5 max-w-lg font-sans text-[12px] leading-[1.85]"
+          style={{ color: "rgb(87,83,78)" }}
         >
           {cta.body}
         </p>
         <div className="mt-8 flex justify-center">
           <Link
             href="/architecture"
-            className="group inline-flex items-center gap-2 rounded-sm px-6 py-3.5 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:opacity-90"
+            className="group inline-flex items-center gap-2 rounded-sm px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:opacity-90"
             style={{
               background: "var(--nyx-accent-soft)",
               border: "1px solid oklch(0.62 0.14 260 / 0.4)",
@@ -53,6 +53,12 @@ export function CtaSection() {
                 strokeLinejoin="round"
               />
             </svg>
+          </Link>
+          <Link
+            href="/docs"
+            className="ml-3 inline-flex items-center gap-2 rounded-sm border border-stone-200 px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:border-[var(--nyx-accent)]/50 hover:text-[var(--nyx-accent)]"
+          >
+            Docs
           </Link>
         </div>
       </div>

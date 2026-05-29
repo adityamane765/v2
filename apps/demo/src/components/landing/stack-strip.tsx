@@ -1,56 +1,55 @@
 const accent = "var(--nyx-accent)";
 
 const STACK = [
-  { label: "Solana", detail: "Where custody and final settlement live" },
-  { label: "Private batch", detail: "Orders matched off the public tape" },
-  { label: "Zero-knowledge proofs", detail: "Math that balances check out" },
-  { label: "Your wallet", detail: "You sign deposits and withdrawals" },
+  { label: "Solana vault", detail: "Custody, roots, nullifiers, and final settlement" },
+  { label: "Intel TDX", detail: "Private matching in an attested confidential VM" },
+  { label: "ZK proofs", detail: "Spend and match validity checked on-chain" },
+  { label: "Trading key", detail: "Order identity stays separate from wallet custody" },
 ];
 
 export function StackStrip() {
   return (
     <section
       className="border-t py-12"
-      style={{ borderColor: "rgba(255,255,255,0.06)", background: "#050608" }}
+      style={{ borderColor: "rgba(10,10,13,0.08)", background: "rgb(250,250,249)" }}
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-7">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <span
-            className="font-mono text-[10px] uppercase tracking-[0.18em]"
+            className="font-sans text-[10px] uppercase tracking-[0.18em]"
             style={{ color: accent }}
           >
-            Under the hood
+            Technical spine
           </span>
           <span
-            className="font-mono text-[10px]"
-            style={{ color: "rgba(174,172,176,0.4)" }}
+            className="font-sans text-[10px]"
+            style={{ color: "rgb(120,113,108)" }}
           >
-            Devnet preview
+            TEE v2 workstream
           </span>
         </div>
         <p
-          className="mt-3 max-w-xl font-mono text-[11px] leading-[1.75]"
-          style={{ color: "rgba(174,172,176,0.45)" }}
+          className="mt-3 max-w-xl font-sans text-[11px] leading-[1.75]"
+          style={{ color: "rgb(87,83,78)" }}
         >
-          Nyx combines familiar Solana wallets with newer privacy tooling. You do not need
-          to understand every piece on day one — auditors and integrators can go deeper
-          when they are ready.
+          Darknyx keeps the architecture explainable: custody is a Solana program, matching is
+          a measured enclave, and every sensitive state transition has a verification path.
         </p>
         <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4">
           {STACK.map((s) => (
             <li
               key={s.label}
-              className="flex flex-col gap-0.5 border-l border-white/[0.06] pl-3 transition-colors hover:border-[var(--nyx-accent)]/50"
+              className="flex flex-col gap-0.5 border-l border-stone-200 pl-3 transition-colors hover:border-[var(--nyx-accent)]/50"
             >
               <span
-                className="font-mono text-[12px] font-medium"
-                style={{ color: "rgba(245,243,238,0.8)" }}
+                className="font-sans text-[12px] font-medium"
+                style={{ color: "rgb(28,25,23)" }}
               >
                 {s.label}
               </span>
               <span
-                className="font-mono text-[10px] leading-snug"
-                style={{ color: "rgba(174,172,176,0.5)" }}
+                className="font-sans text-[10px] leading-snug"
+                style={{ color: "rgb(87,83,78)" }}
               >
                 {s.detail}
               </span>

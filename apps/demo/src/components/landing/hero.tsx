@@ -37,7 +37,7 @@ function PerspectiveGrid() {
       ctx.beginPath();
       ctx.moveTo(0, originY);
       ctx.lineTo(w, originY);
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.strokeStyle = "rgba(10,10,13,0.08)";
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -46,10 +46,10 @@ function PerspectiveGrid() {
         const baseX = t * w;
 
         const grad = ctx.createLinearGradient(baseX, originY, vpX, vpY);
-        grad.addColorStop(0,    "rgba(255,255,255,0.15)");
-        grad.addColorStop(0.25, "rgba(255,255,255,0.06)");
-        grad.addColorStop(0.65, "rgba(255,255,255,0)");
-        grad.addColorStop(1,    "rgba(255,255,255,0)");
+        grad.addColorStop(0,    "rgba(10,10,13,0.16)");
+        grad.addColorStop(0.25, "rgba(10,10,13,0.08)");
+        grad.addColorStop(0.65, "rgba(10,10,13,0)");
+        grad.addColorStop(1,    "rgba(10,10,13,0)");
 
         ctx.beginPath();
         ctx.moveTo(baseX, originY);
@@ -110,13 +110,13 @@ export function LandingHero() {
   return (
     <section
       className="relative isolate border-b"
-      style={{ borderColor: "rgba(255,255,255,0.06)", height: "calc(100dvh - 44px)", display: "flex", flexDirection: "column" }}
+      style={{ borderColor: "rgba(10,10,13,0.08)", height: "calc(100dvh - 44px)", display: "flex", flexDirection: "column" }}
     >
 
       {/* Hero copy — replaces ASCII banner */}
       <div className="nyx-rise nyx-rise-delay-1 relative flex w-full flex-1 min-h-0 flex-col justify-center pr-5 pl-12 sm:pr-7 sm:pl-16 lg:pr-12 lg:pl-24 xl:pl-32">
         <div
-          className="pointer-events-none absolute inset-0 nyx-grid opacity-60"
+          className="pointer-events-none absolute inset-0 nyx-grid-light opacity-70"
           aria-hidden
         />
         <div className="relative pt-8 pb-24 sm:pt-12">

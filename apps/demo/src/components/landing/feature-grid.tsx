@@ -8,8 +8,8 @@ const green = "#5fb85f";
 const FEATURES = [
   {
     eyebrow: "01 · Hidden intent",
-    title: "Orders never touch\nthe L1 mempool.",
-    sub: "Side, price, amount stay inside the TDX enclave.",
+    title: "Private orders,\npublicly settled.",
+    sub: "Side, price, and amount stay inside the TDX enclave until batch settlement.",
     cluster: "TEE",
     clusterColor: cobalt,
     clusterBg: "var(--nyx-accent-soft)",
@@ -18,8 +18,8 @@ const FEATURES = [
   },
   {
     eyebrow: "02 · Verifiable settlement",
-    title: "Every fill is a\nGroth16 proof.",
-    sub: "VALID_SPEND · VALID_MATCH_BATCH · BN254",
+    title: "Every batch has\nproof material.",
+    sub: "VALID_SPEND · VALID_MATCH_BATCH · BN254 verification on Solana.",
     cluster: "L1",
     clusterColor: green,
     clusterBg: "rgba(95,184,95,0.08)",
@@ -28,8 +28,8 @@ const FEATURES = [
   },
   {
     eyebrow: "03 · Attested executor",
-    title: "TEE-signed atomic\nsettlement.",
-    sub: "Intel TDX · Ed25519 attestation on-chain.",
+    title: "The matcher is\nmeasured code.",
+    sub: "Intel TDX attestation binds settlement signatures to the approved image.",
     cluster: "TEE",
     clusterColor: cobalt,
     clusterBg: "var(--nyx-accent-soft)",
@@ -38,8 +38,8 @@ const FEATURES = [
   },
   {
     eyebrow: "04 · UTXO accounting",
-    title: "Shielded notes,\npublic roots.",
-    sub: "Depth-20 Poseidon Merkle · 32-root ring buffer.",
+    title: "Shielded notes,\nverifiable roots.",
+    sub: "Poseidon commitments, nullifiers, and root history keep funds reconcilable.",
     cluster: "L1",
     clusterColor: green,
     clusterBg: "rgba(95,184,95,0.08)",
@@ -53,34 +53,34 @@ export function FeatureGrid() {
     <section
       id="landing-content"
       className="relative isolate border-t"
-      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+      style={{ borderColor: "rgba(10,10,13,0.08)" }}
     >
       <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-7 sm:py-16">
         <div className="max-w-2xl">
           <span
-            className="font-mono text-[10px] uppercase tracking-[0.18em]"
+            className="font-sans text-[10px] uppercase tracking-[0.18em]"
             style={{ color: cobalt }}
           >
-            What Darknyx gives you
+            Investor brief
           </span>
           <h2
-            className="mt-3 font-mono font-semibold leading-tight tracking-[-0.02em]"
+            className="mt-3 font-sans font-semibold leading-tight tracking-[-0.02em]"
             style={{ fontSize: "clamp(18px, 2.2vw, 28px)" }}
           >
-            <span style={{ color: "rgba(245,243,238,0.85)" }}>A darkpool you can audit</span>
-            <span style={{ color: "rgba(174,172,176,0.5)" }}> without compromising privacy.</span>
+            <span style={{ color: "rgb(28,25,23)" }}>A private liquidity venue</span>
+            <span style={{ color: "rgb(87,83,78)" }}> with a verifiable settlement core.</span>
           </h2>
         </div>
 
         <div
           className="mt-10 grid grid-cols-1 gap-px sm:grid-cols-2"
-          style={{ background: "rgba(255,255,255,0.05)" }}
+          style={{ background: "rgb(231,229,228)" }}
         >
           {FEATURES.map((f) => (
             <article
               key={f.eyebrow}
               className="group relative overflow-hidden text-left"
-              style={{ background: "#050506", padding: "28px 32px 24px" }}
+              style={{ background: "white", padding: "28px 32px 24px" }}
             >
               {/* background image - shifted to cobalt blue via filter */}
               <div
@@ -98,7 +98,7 @@ export function FeatureGrid() {
                 className="absolute inset-0 pointer-events-none"
                 style={{
                   background:
-                    "linear-gradient(135deg, rgba(5,5,6,0.82) 20%, rgba(5,5,6,0.3) 100%)",
+                    "linear-gradient(135deg, rgba(255,255,255,0.94) 20%, rgba(255,255,255,0.62) 100%)",
                 }}
               />
 
@@ -127,15 +127,15 @@ export function FeatureGrid() {
                       }}
                     />
                     <span
-                      className="font-mono text-[8.5px] uppercase tracking-[0.18em]"
+                      className="font-sans text-[8.5px] uppercase tracking-[0.18em]"
                       style={{ color: f.clusterColor }}
                     >
                       {f.cluster}
                     </span>
                   </div>
                   <span
-                    className="font-mono text-[9px] tracking-[0.12em]"
-                    style={{ color: "rgba(174,172,176,0.35)" }}
+                    className="font-sans text-[9px] tracking-[0.12em]"
+                    style={{ color: "rgb(120,113,108)" }}
                   >
                     {f.tech}
                   </span>
@@ -144,16 +144,16 @@ export function FeatureGrid() {
                 {/* title block */}
                 <div className="mt-10">
                   <div
-                    className="font-mono text-[9px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(174,172,176,0.35)" }}
+                    className="font-sans text-[9px] uppercase tracking-[0.2em]"
+                    style={{ color: "rgb(120,113,108)" }}
                   >
                     {f.eyebrow}
                   </div>
                   <h3
-                    className="mt-3 font-mono font-semibold leading-[1.18] tracking-[-0.025em] whitespace-pre-line"
+                    className="mt-3 font-sans font-semibold leading-[1.18] tracking-[-0.025em] whitespace-pre-line"
                     style={{
                       fontSize: "clamp(17px, 2vw, 21px)",
-                      color: "rgba(245,243,238,0.92)",
+                      color: "rgb(28,25,23)",
                     }}
                   >
                     {f.title}
@@ -163,8 +163,8 @@ export function FeatureGrid() {
                 {/* sub — bottom */}
                 <div className="mt-8">
                   <span
-                    className="font-mono text-[11px] leading-[1.65]"
-                    style={{ color: "rgba(174,172,176,0.52)" }}
+                    className="font-sans text-[11px] leading-[1.65]"
+                    style={{ color: "rgb(87,83,78)" }}
                   >
                     {f.sub}
                   </span>
@@ -184,9 +184,16 @@ export function FeatureGrid() {
 
         <Link
           href="/architecture"
-          className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-nyx-fog transition hover:text-[var(--nyx-accent)]"
+          className="mt-8 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
         >
           Technical architecture
+          <span aria-hidden>→</span>
+        </Link>
+        <Link
+          href="/docs"
+          className="ml-6 mt-8 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
+        >
+          Read docs
           <span aria-hidden>→</span>
         </Link>
       </div>

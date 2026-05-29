@@ -145,7 +145,7 @@ components:
       properties:
         access_token:
           type: string
-          description: Bearer token. Pass as `Authorization: Bearer <token>`.
+          description: "Bearer token. Pass as `Authorization: Bearer <token>`."
         token_type:
           type: string
           enum: [Bearer]

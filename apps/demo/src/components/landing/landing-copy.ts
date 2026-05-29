@@ -2,36 +2,36 @@
 
 export const hero = {
   lede:
-    "Darknyx is a private order book on Solana. You deposit tokens into a shielded balance, place orders without broadcasting them to the whole network, and withdraw when you're done — while the chain can still verify that every trade was fair.",
+    "Darknyx is a private central-limit-order-book for Solana. Traders keep order intent out of public mempools, the matcher runs inside an attested Intel TDX enclave, and Solana verifies custody, settlement, and withdrawals with proofs.",
   aside:
-    "Built for traders who want discretion, and for auditors who need math — not trust.",
+    "Built for active traders, market makers, and institutions that need discretion without accepting a custodial black box.",
 };
 
 export const plainBand = {
-  eyebrow: "In plain terms",
-  title: "Privacy where it matters. Proof where it counts.",
+  eyebrow: "Why it matters",
+  title: "Public order books leak alpha. Private venues usually ask for trust. Darknyx removes that tradeoff.",
   points: [
     {
-      title: "Orders stay off the public tape",
-      body: "What you want to buy or sell, and at what price, never hits the open mempool. Matching happens in a protected environment, then only the batch outcome is shared.",
+      title: "Intent stays private",
+      body: "Side, size, and limit price are sent to the TEE matcher, not broadcast into Solana transactions, logs, or accounts before a match clears.",
     },
     {
-      title: "Balances always reconcile",
-      body: "Money in equals money out. Every settlement is checked with cryptography so no one can print tokens or skip paying the other side.",
+      title: "Custody stays on Solana",
+      body: "Funds live in the vault program as shielded note commitments. The matcher cannot withdraw user funds or bypass nullifier and Merkle checks.",
     },
     {
-      title: "You can still verify the system",
-      body: "The protocol publishes enough on-chain evidence for anyone to audit that rules were followed — without revealing individual order details before a match.",
+      title: "Outcomes stay auditable",
+      body: "Every batch settles with TEE signatures and zero-knowledge proofs so auditors can verify conservation, authorization, and replay protection.",
     },
   ],
 };
 
 export const features = {
-  eyebrow: "What Nyx gives you",
-  title: "A darkpool you can audit",
-  titleMuted: "without compromising privacy.",
+  eyebrow: "Investor brief",
+  title: "A privacy venue with a verifiable settlement core",
+  titleMuted: "built for Solana-scale liquidity.",
   lede:
-    "Think of Nyx as a dark pool on Solana: you trade against other participants in periodic batches, not in a glass house. Below is what that means in practice — the deep technical map lives on the architecture page.",
+    "Darknyx pairs the market structure of a dark pool with the audit surface investors expect from crypto infrastructure: user-side keys, attested matching, and on-chain proof verification.",
   cards: [
     {
       eyebrow: "01 · Hidden intent",
@@ -61,31 +61,31 @@ export const features = {
 };
 
 export const flow = {
-  eyebrow: "How it works",
-  title: "Three steps from wallet to withdrawal.",
-  titleMuted: "No jargon required.",
+  eyebrow: "Product flow",
+  title: "From wallet to private batch to final settlement.",
+  titleMuted: "The user experience stays familiar.",
   lede:
-    "You never hand custody to a black box. You sign with your wallet, trade inside the private batch, and settle back on Solana when a match is ready.",
+    "Users sign normal Solana transactions for custody actions and sign order intents with a separate trading key. The system keeps the sensitive path private and the money path verifiable.",
   stages: [
     {
       title: "Join & fund",
-      body: "Create your trading identity in the browser and move tokens into Darknyx's vault. Your balance is represented as a private note — not a public wallet label everyone can watch.",
+      body: "Create a local trading key, attest the TEE, and deposit into the vault. The on-chain balance becomes a private note commitment rather than a public strategy signal.",
     },
     {
       title: "Trade in the batch",
-      body: "Submit buy or sell intent directly into the TEE matcher. The matcher pairs orders at a single clearing price. Other participants never see your individual quote on-chain.",
+      body: "Submit signed order intent to the enclave. The matcher runs frequent batch auctions and returns fills without exposing individual quotes to validators or competitors.",
     },
     {
       title: "Settle & cash out",
-      body: "When the batch closes, settlement lands on Solana with proofs attached. Withdraw to your wallet whenever you want — your keys, your exit.",
+      body: "Settlement lands on Solana with proof material and the registered TEE signature. Withdrawals require the user's own spend proof, preserving user-controlled exits.",
     },
   ],
   footnote:
-    "Curious about PDAs, circuits, and instruction names? The architecture page walks through every layer.",
+    "The docs page expands this into the custody layer, matching layer, cryptography, trust model, API, and roadmap.",
 };
 
 export const cta = {
-  title: "Coming soon on mainnet",
-  titleMuted: "Privacy without sacrificing auditability.",
-  body: "Read the architecture page for how Darknyx works end to end — from private batching to on-chain settlement and withdrawal.",
+  title: "Preparing for investor diligence",
+  titleMuted: "One story, two depths: overview for the round, docs for technical review.",
+  body: "Start with the architecture explorer for the system map, then use the docs portal for the trust model, settlement pipeline, API surface, and competitive differentiation.",
 };
