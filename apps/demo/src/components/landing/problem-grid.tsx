@@ -6,7 +6,7 @@ export function InstitutionalBenefits() {
   return (
     <section
       className="relative isolate border-t"
-      style={{ borderColor: "rgba(10,10,13,0.08)", background: "rgb(250,250,249)" }}
+      style={{ borderColor: "rgba(10,10,13,0.08)", background: "rgb(255,255,255)" }}
     >
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-7 sm:py-16">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
@@ -27,7 +27,7 @@ export function InstitutionalBenefits() {
 
           <div className="grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-2">
             {institutionalBenefits.cards.map((card, index) => (
-              <article key={card.title} className="group bg-white p-6">
+              <article key={card.title} className="group bg-stone-50 p-6">
                 <div className="flex items-center justify-between">
                   <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-stone-400">
                     0{index + 1}

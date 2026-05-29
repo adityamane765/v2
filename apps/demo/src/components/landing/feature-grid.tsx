@@ -11,7 +11,7 @@ export function FeatureGrid() {
   return (
     <section
       className="relative isolate border-t"
-      style={{ borderColor: "rgba(10,10,13,0.08)" }}
+      style={{ borderColor: "rgba(255,255,255,0.08)", background: "#050608" }}
     >
       <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-7 sm:py-16">
         <div className="max-w-2xl">
@@ -25,14 +25,14 @@ export function FeatureGrid() {
             className="mt-3 font-sans font-semibold leading-tight tracking-[-0.02em]"
             style={{ fontSize: "clamp(18px, 2.2vw, 28px)" }}
           >
-            <span style={{ color: "rgb(28,25,23)" }}>{solutionCards.title}</span>
-            <span style={{ color: "rgb(87,83,78)" }}> {solutionCards.titleMuted}</span>
+            <span style={{ color: "var(--nyx-chalk)" }}>{solutionCards.title}</span>
+            <span style={{ color: "rgba(174,172,176,0.78)" }}> {solutionCards.titleMuted}</span>
           </h2>
         </div>
 
         <div
           className="mt-10 grid grid-cols-1 gap-px sm:grid-cols-2"
-          style={{ background: "rgb(231,229,228)" }}
+          style={{ background: "rgba(255,255,255,0.1)" }}
         >
           {solutionCards.cards.map((f) => {
             const clusterColor = f.cluster === "L1" || f.cluster === "ZK" ? green : cobalt;
@@ -41,7 +41,7 @@ export function FeatureGrid() {
             <article
               key={f.eyebrow}
               className="group relative overflow-hidden text-left"
-              style={{ background: "white", padding: "28px 32px 24px" }}
+              style={{ background: "rgba(255,255,255,0.04)", padding: "28px 32px 24px" }}
             >
               <div
                 className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-85"
@@ -57,7 +57,7 @@ export function FeatureGrid() {
                 className="absolute inset-0 pointer-events-none"
                 style={{
                   background:
-                    "linear-gradient(135deg, rgba(255,255,255,0.94) 20%, rgba(255,255,255,0.62) 100%)",
+                    "linear-gradient(135deg, rgba(5,6,8,0.94) 20%, rgba(5,6,8,0.68) 100%)",
                 }}
               />
 
@@ -92,7 +92,7 @@ export function FeatureGrid() {
                   </div>
                   <span
                     className="font-sans text-[9px] tracking-[0.12em]"
-                    style={{ color: "rgb(120,113,108)" }}
+                    style={{ color: "rgba(245,243,238,0.54)" }}
                   >
                     {f.tech}
                   </span>
@@ -101,7 +101,7 @@ export function FeatureGrid() {
                 <div className="mt-10">
                   <div
                     className="font-sans text-[9px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgb(120,113,108)" }}
+                    style={{ color: "rgba(245,243,238,0.54)" }}
                   >
                     {f.eyebrow}
                   </div>
@@ -109,7 +109,7 @@ export function FeatureGrid() {
                     className="mt-3 font-sans font-semibold leading-[1.18] tracking-[-0.025em] whitespace-pre-line"
                     style={{
                       fontSize: "clamp(17px, 2vw, 21px)",
-                      color: "rgb(28,25,23)",
+                      color: "var(--nyx-chalk)",
                     }}
                   >
                     {f.title}
@@ -119,7 +119,7 @@ export function FeatureGrid() {
                 <div className="mt-8">
                   <span
                     className="font-sans text-[11px] leading-[1.65]"
-                    style={{ color: "rgb(87,83,78)" }}
+                    style={{ color: "rgba(245,243,238,0.68)" }}
                   >
                     {f.sub}
                   </span>
@@ -139,14 +139,14 @@ export function FeatureGrid() {
 
         <Link
           href="/docs/architecture-overview"
-          className="mt-8 inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
+          className="mt-8 inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-300 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-stone-950"
         >
           Technical architecture
           <span aria-hidden>→</span>
         </Link>
         <Link
           href="/docs"
-          className="ml-6 mt-8 inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
+          className="ml-6 mt-8 inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-300 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-stone-950"
         >
           Read docs
           <span aria-hidden>→</span>

@@ -12,7 +12,7 @@ export function FlowDiagram() {
       className="relative isolate overflow-hidden border-t"
       style={{
         borderColor: "rgba(10,10,13,0.08)",
-        backgroundColor: "white",
+        backgroundColor: "rgb(250,250,249)",
         backgroundImage: "radial-gradient(rgba(10,10,13,0.08) 1px, transparent 1px)",
         backgroundSize: "18px 18px",
       }}
@@ -49,7 +49,7 @@ export function FlowDiagram() {
                 style={{
                   border: "1px solid rgb(231,229,228)",
                   borderRadius: "8px",
-                  background: "rgba(255,255,255,0.86)",
+                  background: "rgba(255,255,255,0.88)",
                   boxShadow: "0 1px 2px rgba(28,25,23,0.04)",
                 }}
               >
@@ -84,7 +84,7 @@ export function FlowDiagram() {
           </p>
           <Link
             href="/docs/architecture-overview"
-            className="inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
+            className="inline-flex items-center gap-2 rounded-sm font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nyx-accent)] focus-visible:ring-offset-4"
           >
             Architecture deep-dive
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">

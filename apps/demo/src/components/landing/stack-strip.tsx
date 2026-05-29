@@ -16,12 +16,6 @@ export function StackStrip() {
           >
             {stack.eyebrow}
           </span>
-          <span
-            className="font-sans text-[10px]"
-            style={{ color: "rgb(120,113,108)" }}
-          >
-            {stack.note}
-          </span>
         </div>
         <p
           className="mt-3 max-w-xl font-sans text-[11px] leading-[1.75]"

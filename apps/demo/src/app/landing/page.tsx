@@ -11,8 +11,8 @@ import { StackStrip } from "@/components/landing/stack-strip";
 
 export default function Home() {
   return (
-    <div className="landing-light nyx-pixel-grid-light flex min-h-screen flex-1 flex-col bg-stone-50 text-stone-950">
-      <NyxNav tone="chalk" active="home" launchHref={null} />
+    <div className="landing-light nyx-pixel-grid flex min-h-screen flex-1 flex-col bg-[#050608] text-stone-50">
+      <NyxNav tone="ink" active="home" launchHref={null} />
       <main className="flex-1">
         <LandingHero />
         <MarketStructureBand />
@@ -24,7 +24,7 @@ export default function Home() {
         <FlowDiagram />
         <CtaSection />
       </main>
-      <NyxFooter tone="chalk" />
+      <NyxFooter tone="ink" />
     </div>
   );
 }

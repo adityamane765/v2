@@ -30,7 +30,7 @@ export function PlainOverview() {
           </p>
         </div>
 
-        <ul className="mt-10 grid gap-px sm:grid-cols-3" style={{ background: "rgb(231,229,228)" }}>
+        <ul className="mt-10 grid gap-px overflow-hidden rounded-lg border border-stone-200 sm:grid-cols-3" style={{ background: "rgb(231,229,228)" }}>
           {plainBand.points.map((point, i) => (
             <li
               key={point.title}

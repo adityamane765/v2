@@ -10,7 +10,7 @@ export function MarketStructureBand() {
       style={{
         borderColor: "rgba(10,10,13,0.08)",
         background:
-          "linear-gradient(135deg, rgb(250,250,249) 0%, rgb(255,255,255) 52%, oklch(0.62 0.14 260 / 0.08) 100%)",
+          "linear-gradient(135deg, rgb(250,250,249) 0%, rgb(255,255,255) 52%, oklch(0.62 0.14 260 / 0.10) 100%)",
       }}
     >
       <div

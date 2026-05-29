@@ -138,7 +138,6 @@ export const solutionCards = {
 
 export const stack = {
   eyebrow: "Four-part architecture",
-  note: "Investor-readable, builder-verifiable",
   body:
     "Darknyx separates the sensitive path from the money path: matching happens privately, while custody and settlement remain on Solana.",
   items: [
