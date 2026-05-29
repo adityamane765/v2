@@ -43,16 +43,7 @@ export function CtaSection() {
               color: "var(--nyx-accent)",
             }}
           >
-            Architecture
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-              <path
-                d="M2 5.5h7m0 0L5.5 2m3.5 3.5L5.5 9"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            See docs
           </Link>
           <Link
             href="/docs/trust-model"

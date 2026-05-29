@@ -5,9 +5,17 @@ const accent = "var(--nyx-accent)";
 export function PlainOverview() {
   return (
     <section
-      className="relative isolate border-t"
+      className="relative isolate overflow-hidden border-t"
       style={{ borderColor: "rgba(255,255,255,0.08)", background: "#08090f" }}
     >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 70% at 0% 0%, oklch(0.62 0.14 260 / 0.22), transparent 70%)",
+        }}
+        aria-hidden
+      />
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-7 sm:py-16">
         <div className="max-w-2xl">
           <span

@@ -173,7 +173,7 @@ export const flow = {
 };
 
 export const cta = {
-  title: "Built for investor diligence",
-  titleMuted: "A simple story on the surface. A verifiable system underneath.",
+  title: "Privacy without sacrificing auditability",
+  titleMuted: "",
   body: "Start with the technical docs for the trust model, settlement pipeline, API surface, and competitive differentiation.",
 };
