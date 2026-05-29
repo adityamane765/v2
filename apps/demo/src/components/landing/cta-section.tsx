@@ -35,7 +35,7 @@ export function CtaSection() {
         </p>
         <div className="mt-8 flex justify-center">
           <Link
-            href="/architecture"
+            href="/docs/architecture-overview"
             className="group inline-flex items-center gap-2 rounded-sm px-6 py-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:opacity-90"
             style={{
               background: "var(--nyx-accent-soft)",

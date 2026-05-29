@@ -35,11 +35,11 @@ declared, plus an Ed25519 signature from the registered TEE pubkey.
 
 ### Layer 2 — Matching (inside a TDX CVM)
 
-A single-process Rust daemon, `darknyx-tee`, runs inside a Phala Cloud
+A single-process Rust daemon, `nyx-tee`, runs inside a Phala Cloud
 Confidential Virtual Machine. Inside that process:
 
 ```text
-darknyx-tee  (single Rust process, ~3 GB RAM, ~4 vCPU)
+nyx-tee  (single Rust process, ~3 GB RAM, ~4 vCPU)
   │
   ├── dstack handshake (boot)
   │   └── derives Ed25519 signer + JWT secret from
@@ -109,54 +109,22 @@ The SDK is the user-side bridge. It:
 
 ## Component map
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│  USER DEVICE                                                    │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  TypeScript SDK                                          │   │
-│  │  ├── ZK provers (VALID_INPUT, VALID_SPEND, ...)         │   │
-│  │  ├── Solana tx builders                                  │   │
-│  │  ├── TEE attestation verifier                            │   │
-│  │  └── HTTPS client + Ed25519 trading-key signer           │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                 │
-└──────────────────────────────────────────────────────────────────┘
-        │                                          │
-        │ Solana RPC                               │ HTTPS
-        │ (deposits, withdraws, register)          │ (orders, status)
-        ▼                                          ▼
-┌────────────────────────────────────────┐   ┌─────────────────────┐
-│                                        │   │                     │
-│  SOLANA                                │   │  TDX CVM            │
-│  ┌──────────────────────────────────┐  │   │  (Phala Cloud)      │
-│  │  vault program                   │  │   │                     │
-│  │  ├── create_wallet               │  │   │  darknyx-tee daemon     │
-│  │  ├── deposit                     │  │   │  ├── HTTP / RA-TLS  │
-│  │  ├── lock_note                   │◄─┼───┼──┤ matcher driver   │
-│  │  ├── verify_match_batch          │  │   │  ├── oracle sync    │
-│  │  ├── tee_forced_settle_batched   │  │   │  ├── settle sched   │
-│  │  ├── close_batch_validity_marker │  │   │  └── in-TEE prover  │
-│  │  └── withdraw                    │  │   │     (VALID_MATCH    │
-│  │                                  │  │   │     _BATCH n=16)    │
-│  │  STATE:                          │  │   │                     │
-│  │  - Merkle tree                   │  │   │  Keys derived from  │
-│  │  - nullifier set                 │  │   │  dstack-kms at boot:│
-│  │  - consumed-note set             │  │   │  - tee_authority    │
-│  │  - VaultConfig (tee_pubkey)      │  │   │    (Ed25519)        │
-│  │  - per-batch markers             │  │   │  - JWT secret       │
-│  └──────────────────────────────────┘  │   │  - Solana fee-payer │
-│                                        │   │    (same key as     │
-│  ┌──────────────────────────────────┐  │   │     tee_authority)  │
-│  │  matching_engine program         │  │   │                     │
-│  │  (deprecating in TEE v2)         │  │   └─────────────────────┘
-│  └──────────────────────────────────┘  │            │
-└────────────────────────────────────────┘            │
-        ▲                                              │
-        │                                              │
-        └──────────────────────────────────────────────┘
-                    settle pipeline (Tx A..E)
-                    signed by the TEE keypair
+```mermaid
+flowchart TB
+  SDK["TypeScript SDK<br/>• ZK provers (VALID_INPUT, VALID_SPEND, ...)<br/>• Solana tx builders<br/>• TEE attestation verifier<br/>• HTTPS client + Ed25519 trading-key signer"]
+
+  subgraph SOL["SOLANA"]
+    VAULT["vault program<br/>• create_wallet / deposit / lock_note / verify_match_batch<br/>• tee_forced_settle_batched / close_batch_validity_marker / withdraw<br/><br/>State:<br/>• Merkle tree<br/>• nullifier set<br/>• consumed-note set<br/>• VaultConfig (tee_pubkey)<br/>• per-batch markers"]
+    MATCHING["matching_engine program<br/>(deprecating in TEE v2)"]
+  end
+
+  subgraph TEE["TDX CVM (Phala Cloud)"]
+    DAEMON["nyx-tee daemon<br/>• HTTP / RA-TLS<br/>• matcher driver<br/>• oracle sync<br/>• settle scheduler<br/>• in-TEE prover (VALID_MATCH_BATCH n=16)<br/><br/>Keys from dstack-kms:<br/>• tee_authority (Ed25519)<br/>• JWT secret<br/>• Solana fee-payer"]
+  end
+
+  SDK -->|"Solana RPC<br/>(deposits, withdraws, register)"| VAULT
+  SDK -->|"HTTPS<br/>(orders, status)"| DAEMON
+  DAEMON -->|"settle pipeline (Tx A..E)"| VAULT
 ```
 
 ---
@@ -284,3 +252,8 @@ the user's secret stays on their device.**
   batched flow, the 1232-byte size budget, the ALT story.
 - [API & integration](./api-and-integration.md) — wire contract,
   authentication, order lifecycle, settlement status polling.
+
+---
+
+*Last updated 2026-05-29.*
+</content>

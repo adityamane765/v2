@@ -183,7 +183,7 @@ export function FeatureGrid() {
         </div>
 
         <Link
-          href="/architecture"
+          href="/docs/architecture-overview"
           className="mt-8 inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
         >
           Technical architecture

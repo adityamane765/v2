@@ -16,17 +16,19 @@ pipeline. The transactions are submitted by the TEE's settle
 scheduler, signed by the TEE's deterministically-derived Ed25519
 keypair (which also acts as the Solana fee-payer).
 
-```text
-                                    ┌──────────────────────────┐
-matcher tick emits RunBatchOutput   │  per match in batch:     │
-              │                     │  Tx A:  lock_note × 2   │
-              ▼                     │  Tx B:  verify_match_   │
-   ┌──────────────────────┐         │           batch (Groth16)│
-   │  SettleScheduler     │ ───────►│  Tx C:  ALT create/ext   │
-   └──────────────────────┘         │  Tx D:  tee_forced_     │
-              │                     │           settle_batched │
-              ▼                     │  Tx E:  close marker     │
-        Solana devnet               └──────────────────────────┘
+```mermaid
+flowchart LR
+  MATCHER["Matcher tick emits RunBatchOutput"]
+  SCHED["SettleScheduler (TEE)"]
+  CHAIN["Solana devnet"]
+  A["Tx A: lock_note × 2"]
+  B["Tx B: verify_match_batch (Groth16)"]
+  C["Tx C: ALT create + extend"]
+  D["Tx D: tee_forced_settle_batched"]
+  E["Tx E: close_batch_validity_marker"]
+
+  MATCHER --> SCHED
+  SCHED --> A --> B --> C --> D --> E --> CHAIN
 ```
 
 Each transaction is described below in detail, including its
@@ -38,7 +40,7 @@ account list, instruction data, size budget, and failure modes.
 
 **Purpose.** Pin the buyer's and seller's input notes to the
 specific match for the duration of settlement. Prevents the user
-from withdrawing the same notes while settlement is active.
+from withdrawing the same notes while they're in flight.
 
 **Inputs (per side):**
 - `note_commitment` (32 bytes) — the input note's Poseidon hash
@@ -289,7 +291,7 @@ swept (rare; future maintenance task).
 
 Solana caps a single transaction at 1,232 bytes including
 signatures, blockhash, account list, and instruction data. Several
-of Darknyx's settle txs are right at the edge:
+of Nyx's settle txs are right at the edge:
 
 | Tx | Approx size | Headroom |
 |---|---|---|
@@ -333,8 +335,8 @@ ALTs have two state transitions clients care about:
 
 2. **Address cap.** Each ALT holds at most 256 addresses. Our
    per-batch ALT uses only 5 of the 256 slots — there's room to
-   bundle multiple batches' settles into one ALT for higher
-   throughput deployments.
+   bundle multiple batches' settles into one ALT if a future
+   batch-batcher wants to.
 
 For the current design (one ALT per batch), the lifecycle is:
 
@@ -347,9 +349,11 @@ Tx C creates ALT → Tx D references ALT (extend complete)
                    close in a maintenance task)
 ```
 
-The economics are small: ~$0.001 per ALT, ~50 ALTs per day at
-modest throughput = ~$1.50/month in lost rent on devnet, with
-roughly proportional mainnet costs. Not zero, not load-bearing.
+The "rent is returned via close in a maintenance task" piece is
+future work; the current implementation lets the ALT rent sit
+indefinitely. The economics: ~$0.001 per ALT, ~50 ALTs per day
+at modest throughput = ~$1.50/month in lost rent on devnet, ~
+proportionally on mainnet. Not zero, not load-bearing.
 
 ---
 
@@ -409,3 +413,10 @@ The in-TEE work (witness construction, Groth16 prove, payload
 signing) is comparatively cheap — under 100ms per match at the
 current implementation stage. The settle latency is the chain,
 not the TEE.
+
+---
+
+*Last updated 2026-05-29. Source of truth: `CRYPTOGRAPHY.md` §9,
+`programs/vault/src/instructions/tee_forced_settle_batched.rs`,
+`docs/v3.5-migration.md`.*
+</content>

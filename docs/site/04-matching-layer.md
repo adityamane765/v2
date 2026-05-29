@@ -67,7 +67,7 @@ walks through the full chain.
 TDX wins on three counts for our use case:
 
 1. **Programming model.** TDX runs a full Linux guest. We compile
-   `darknyx-tee` as a normal Rust binary, package it in a Docker image,
+   `nyx-tee` as a normal Rust binary, package it in a Docker image,
    and Phala's tooling launches it inside a TDX VM. No SDK-specific
    gymnastics; no restricted syscall set.
 
@@ -113,11 +113,11 @@ The matcher is a **uniform-clearing-price frequent-batch auction**:
 3. Matches feed the settle scheduler (see
    [settlement-pipeline](./settlement-pipeline.md)).
 
-The algorithm lives in a separate crate (`darkpool-matcher`). Both
-the on-chain `run_batch` instruction (used in the v1 MagicBlock PER
-path) and the in-TEE matcher consume the same crate. Identical
-bytes in, identical matches out — regardless of which environment
-is running it.
+The algorithm lives in a separate crate (`darkpool-matcher`) that
+is **the single source of truth**. Both the on-chain `run_batch`
+instruction (used in the v1 MagicBlock PER path) and the in-TEE
+matcher consume the same crate. Identical bytes in, identical
+matches out — regardless of which environment is running it.
 Behavioral parity is enforced by a litesvm integration test
 (`crates/darkpool-matcher/tests/parity.rs`).
 
@@ -180,6 +180,64 @@ sign a settle, the settle would have to clear within `band%` of
 the Pyth feed. The on-chain verifier doesn't re-check this band
 (it would cost too much in Solana compute units), but the
 breaker provides an in-TEE safety belt.
+
+---
+
+## The frequent-batch auction in pseudocode
+
+```rust
+// crates/darkpool-matcher/src/lib.rs (simplified)
+pub fn run_batch(
+    book: &OrderBook,
+    oracle: &OracleSnapshot,
+    cfg: &MatchConfig,
+    current_slot: u64,
+    start_match_id: u64,
+) -> Result<RunBatchOutput, MatchError> {
+    // 1. Sweep expired orders (any order with
+    //    expiry_slot <= current_slot + SETTLEMENT_BUFFER_SLOTS
+    //    is dropped before matching).
+    let book = book.without_expired(current_slot);
+
+    // 2. Partition book into bids and asks, each price-sorted.
+    let (bids, asks) = partition_book(&book);
+
+    // 3. Compute the clearing price (the price that maximizes
+    //    matched volume).
+    let clearing_price = compute_clearing_price(&bids, &asks, oracle)?;
+
+    // 4. Circuit-breaker check: |clearing - oracle.twap| <= band.
+    if !within_oracle_band(clearing_price, oracle.twap, cfg.circuit_breaker_bps) {
+        return Ok(RunBatchOutput::empty(
+            current_slot,
+            clearing_price,
+            CB_TRIPPED,
+        ));
+    }
+
+    // 5. Match orders in FIFO order at the clearing price.
+    let mut matches = Vec::new();
+    let mut match_id = start_match_id;
+    while let Some((bid, ask)) = next_crossing_pair(&bids, &asks, clearing_price) {
+        let pair = build_match_pair(bid, ask, clearing_price, match_id, &cfg)?;
+        matches.push(pair);
+        match_id += 1;
+    }
+
+    // 6. Generate change notes for partial fills, apply
+    //    fee accumulator drain rules, etc.
+    let output = finalize_output(matches, clearing_price, oracle, current_slot, cfg)?;
+    Ok(output)
+}
+```
+
+The actual implementation is ~2000 lines of pure Rust. No
+floating point anywhere — every amount, price, and fee is u64.
+The matcher is deterministic given identical inputs (no clock
+reads, no random sources). This is what makes the
+single-source-of-truth property work: the on-chain `run_batch`
+ix and the in-TEE matcher both call into the same Rust crate
+and produce identical outputs.
 
 ---
 
@@ -301,12 +359,12 @@ unmatchable" experience.
 
 ---
 
-## Performance characteristics
+## Performance characteristics (informational)
 
 Numbers below are from internal benchmarks on the dstack simulator
 (local dev hardware) and a small Phala devnet CVM. The full
-benchmark report lives in `crates/darknyx-tee-loadgen/BENCHMARK.md`
-for engineering reference.
+benchmark report lives in `crates/nyx-tee-loadgen/BENCHMARK.md`
+(planned to be populated as the load-gen workstream completes).
 
 | Metric | Local-simulator (dev machine) | Phala devnet (tdx.small) |
 |---|---|---|
@@ -320,3 +378,35 @@ The settle pipeline latency is dominated by Solana confirmation
 times, not the in-TEE work. Optimizing the TEE's wall-clock
 performance won't move the user-visible "submit to fill" number
 until on-chain finality also drops.
+
+---
+
+## What's coming
+
+The matching layer is in the middle of the **TEE v2** migration.
+Status as of mid-2026:
+
+- ✅ dstack handshake (boot path)
+- ✅ Ed25519 signer derivation
+- ✅ Oracle VAA verification + sync
+- ✅ Matcher driver + tokio interval
+- ✅ HTTP surface (`/health`, `/info`, `/attestation`, `/auth/token`,
+  `/orders`, `/settlement/status`)
+- ✅ POST /orders auth (Layer A + Layer B)
+- ✅ Settle scheduler skeleton + Solana RPC client
+- ✅ `lock_note` builder + Tx A submission
+- ✅ VALID_MATCH_BATCH prover foundation (witness types, leaf/root
+  computation, conservation validators)
+- ⏳ In-TEE Groth16 prover wiring (next PR)
+- ⏳ Tx B / C / D builders
+- ⏳ Tx E (close marker)
+- ⏳ End-to-end litesvm test
+
+See [roadmap-and-status](./roadmap-and-status.md) for the full
+list with commit references.
+
+---
+
+*Last updated 2026-05-29. Source of truth: `crates/darkpool-matcher/`,
+`crates/nyx-tee/`, `docs/tee-architecture.md`.*
+</content>

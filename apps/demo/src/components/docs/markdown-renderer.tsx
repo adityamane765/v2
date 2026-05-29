@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { slugifyHeading } from "@/lib/docs";
+import { MermaidBlock } from "@/components/docs/mermaid-block";
+import { SyntaxCodeBlock } from "@/components/docs/syntax-code-block";
 
 type Block =
   | { type: "heading"; depth: number; text: string }
@@ -132,16 +134,10 @@ function DiagramBlock({ text }: { text: string }) {
 }
 
 function CodeBlock({ lang, text }: { lang: string; text: string }) {
+  const normalizedLang = lang.toLowerCase();
+  if (normalizedLang === "mermaid") return <MermaidBlock chart={text} />;
   if (isDiagram(text, lang)) return <DiagramBlock text={text} />;
-
-  return (
-    <div className="nyx-doc-code-block">
-      <div className="nyx-doc-code-label">{lang || "text"}</div>
-      <pre>
-        <code className={`language-${lang || "text"}`}>{text}</code>
-      </pre>
-    </div>
-  );
+  return <SyntaxCodeBlock lang={normalizedLang} text={text} />;
 }
 
 function parseBlocks(markdown: string): Block[] {

@@ -5,110 +5,138 @@ import { MarkdownRenderer } from "@/components/docs/markdown-renderer";
 import { NyxFooter } from "@/components/brand/nyx-footer";
 import { NyxNav } from "@/components/brand/nyx-nav";
 import type { DocPageData } from "@/lib/docs";
-import { getDocsNav, getDocsSearchIndex } from "@/lib/docs";
+import { getAllDocs, getDocsNav, getDocsSearchIndex } from "@/lib/docs";
 
 export function DocsShell({ doc }: { doc: DocPageData }) {
   const nav = getDocsNav();
   const searchItems = getDocsSearchIndex();
+  const orderedDocs = getAllDocs();
+  const activeDocIndex = orderedDocs.findIndex((item) => item.slug === doc.slug);
+  const previousDoc = activeDocIndex > 0 ? orderedDocs[activeDocIndex - 1] : null;
+  const nextDoc =
+    activeDocIndex >= 0 && activeDocIndex < orderedDocs.length - 1
+      ? orderedDocs[activeDocIndex + 1]
+      : null;
 
   return (
     <div className="docs-light min-h-screen bg-stone-50 text-stone-950">
       <NyxNav tone="chalk" active="docs" launchHref="/dapp" />
-      <main className="mx-auto grid w-full max-w-7xl grid-cols-1 px-5 sm:px-7 lg:grid-cols-[260px_minmax(0,1fr)_220px] lg:gap-10">
-        <aside className="hidden border-r border-stone-200 py-8 pr-6 lg:block">
-          <Link href="/docs" className="text-sm font-semibold text-[var(--nyx-accent)]">
-            Documentation
-          </Link>
-          <div className="mt-5">
-            <DocsSearch items={searchItems} />
-          </div>
-          <nav className="mt-8 space-y-7">
-            {nav.map((section) => (
-              <div key={section.group}>
-                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
-                  {section.group}
-                </div>
-                <div className="mt-3 space-y-1">
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.slug}
-                      href={`/docs/${item.slug}`}
-                      className="block border-l py-1.5 pl-3 text-sm leading-snug transition-colors hover:text-[var(--nyx-accent)]"
-                      style={{
-                        borderColor: item.slug === doc.slug ? "var(--nyx-accent)" : "rgb(231 229 228)",
-                        color: item.slug === doc.slug ? "rgb(28 25 23)" : "rgb(87 83 78)",
-                      }}
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
-                </div>
+      <main className="mx-auto w-full max-w-[1400px] px-4 pb-14 pt-6 sm:px-7 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)_230px]">
+          <aside className="hidden lg:block">
+            <div className="nyx-doc-sidebar">
+              <Link href="/docs" className="nyx-doc-sidebar-title">
+                Darknyx Documentation
+              </Link>
+              <p className="mt-1 text-xs leading-5 text-stone-500">
+                Protocol architecture, trust assumptions, API, and integration notes.
+              </p>
+              <div className="mt-4">
+                <DocsSearch items={searchItems} />
               </div>
-            ))}
-          </nav>
-        </aside>
+              <nav className="mt-6 space-y-6">
+                {nav.map((section) => (
+                  <div key={section.group}>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-stone-500">
+                      {section.group}
+                    </div>
+                    <div className="mt-2.5 space-y-1">
+                      {section.items.map((item) => (
+                        <Link
+                          key={item.slug}
+                          href={`/docs/${item.slug}`}
+                          className={`nyx-doc-nav-link ${
+                            item.slug === doc.slug ? "nyx-doc-nav-link-active" : ""
+                          }`}
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </nav>
+            </div>
+          </aside>
 
-        <article className="min-w-0 py-10 lg:py-14">
-          <div className="mb-8 border-b border-stone-200 pb-5 lg:hidden">
-            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
-              Docs
-            </div>
-            <div className="mt-3">
-              <DocsSearch items={searchItems} />
-            </div>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-              {nav.flatMap((section) =>
-                section.items.map((item) => (
+          <article className="min-w-0">
+            <div className="mb-4 rounded-xl border border-stone-200/80 bg-white/85 p-4 backdrop-blur-sm lg:hidden">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-stone-500">
+                Browse docs
+              </div>
+              <div className="mt-3">
+                <DocsSearch items={searchItems} />
+              </div>
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                {orderedDocs.map((item) => (
                   <Link
                     key={item.slug}
                     href={`/docs/${item.slug}`}
-                    className="shrink-0 rounded-md border px-3 py-2 text-xs transition-colors"
-                    style={{
-                      borderColor: item.slug === doc.slug ? "oklch(0.62 0.14 260 / 0.45)" : "rgb(231 229 228)",
-                      color: item.slug === doc.slug ? "var(--nyx-accent)" : "rgb(87 83 78)",
-                      background: item.slug === doc.slug ? "oklch(0.62 0.14 260 / 0.08)" : "white",
-                    }}
+                    className={`nyx-doc-mobile-link ${
+                      item.slug === doc.slug ? "nyx-doc-mobile-link-active" : ""
+                    }`}
                   >
                     {item.title}
                   </Link>
-                )),
+                ))}
+              </div>
+            </div>
+
+            <div className="nyx-doc-article-card">
+              <header className="nyx-doc-article-header">
+                <span className="nyx-doc-badge">{doc.group}</span>
+                <h1 className="mt-4 text-3xl font-semibold leading-tight text-stone-950 sm:text-4xl">
+                  {doc.title}
+                </h1>
+                <p className="mt-4 max-w-2xl text-base leading-8 text-stone-600">{doc.description}</p>
+              </header>
+              <MarkdownRenderer content={doc.content} />
+              {previousDoc || nextDoc ? (
+                <div className="mt-14 grid gap-3 border-t border-stone-200 pt-7 sm:grid-cols-2">
+                  {previousDoc ? (
+                    <Link href={`/docs/${previousDoc.slug}`} className="nyx-doc-pager-link">
+                      <div className="text-xs uppercase tracking-[0.09em] text-stone-500">Previous</div>
+                      <div className="mt-1.5 text-sm font-medium text-stone-900">{previousDoc.title}</div>
+                    </Link>
+                  ) : (
+                    <div />
+                  )}
+                  {nextDoc ? (
+                    <Link href={`/docs/${nextDoc.slug}`} className="nyx-doc-pager-link text-left sm:text-right">
+                      <div className="text-xs uppercase tracking-[0.09em] text-stone-500">Next</div>
+                      <div className="mt-1.5 text-sm font-medium text-stone-900">{nextDoc.title}</div>
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </article>
+
+          <aside className="hidden py-2 xl:block">
+            <div className="nyx-doc-toc">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-stone-500">
+                On this page
+              </div>
+              {doc.headings.length ? (
+                <nav className="mt-3 space-y-1.5">
+                  {doc.headings.map((heading) => (
+                    <a
+                      key={heading.id}
+                      href={`#${heading.id}`}
+                      className={`nyx-doc-toc-link ${heading.depth === 3 ? "nyx-doc-toc-link-nested" : ""}`}
+                    >
+                      {heading.text}
+                    </a>
+                  ))}
+                </nav>
+              ) : (
+                <p className="mt-3 text-xs leading-5 text-stone-500">
+                  No sections available for this page yet.
+                </p>
               )}
             </div>
-          </div>
-
-          <div className="mb-8 border-b border-stone-200 pb-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--nyx-accent)]">
-              Darknyx Docs
-            </div>
-            <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight text-stone-950 sm:text-4xl">
-              {doc.title}
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-stone-600">
-              {doc.description}
-            </p>
-          </div>
-          <MarkdownRenderer content={doc.content} />
-        </article>
-
-        <aside className="hidden py-14 xl:block">
-          <div className="sticky top-24 border-l border-stone-200 pl-5">
-            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-500">
-              On this page
-            </div>
-            <nav className="mt-3 space-y-2">
-              {doc.headings.map((heading) => (
-                <a
-                  key={heading.id}
-                  href={`#${heading.id}`}
-                  className="block text-xs leading-snug text-stone-500 transition hover:text-[var(--nyx-accent)]"
-                  style={{ paddingLeft: heading.depth === 3 ? 12 : 0 }}
-                >
-                  {heading.text}
-                </a>
-              ))}
-            </nav>
-          </div>
-        </aside>
+          </aside>
+        </div>
       </main>
       <NyxFooter tone="chalk" />
     </div>

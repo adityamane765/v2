@@ -11,12 +11,11 @@ interface NyxNavProps {
    */
   launchHref?: string | null;
   /** Active page hint — applied to nav links for subtle emphasis. */
-  active?: "home" | "architecture" | "docs" | "dapp" | null;
+  active?: "home" | "docs" | "dapp" | null;
 }
 
 const LINKS: Array<{ label: string; href: string; key: NonNullable<NyxNavProps["active"]> }> = [
   { label: "Overview", href: "/landing", key: "home" },
-  { label: "Architecture", href: "/architecture", key: "architecture" },
   { label: "Docs", href: "/docs", key: "docs" },
 ];
 

@@ -43,17 +43,17 @@ export function DocsSearch({ items }: { items: DocSearchItem[] }) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search docs..."
-        className="h-10 w-full rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-950 shadow-sm outline-none transition placeholder:text-stone-400 focus:border-[var(--nyx-accent)] focus:ring-2 focus:ring-[oklch(0.62_0.14_260_/_0.18)]"
+        className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-950 shadow-sm outline-none transition placeholder:text-stone-400 focus-visible:border-[var(--nyx-accent)] focus-visible:ring-2 focus-visible:ring-[oklch(0.62_0.14_260_/_0.18)]"
       />
       {trimmed.length >= 2 ? (
-        <div className="absolute left-0 right-0 top-12 z-20 max-h-96 overflow-auto rounded-lg border border-stone-200 bg-white p-2 shadow-lg">
+        <div className="absolute left-0 right-0 top-12 z-20 max-h-96 overflow-auto rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
           {results.length ? (
             <div className="space-y-1">
               {results.map(({ item }) => (
                 <Link
                   key={item.slug}
                   href={`/docs/${item.slug}`}
-                  className="block rounded-md px-3 py-2 transition hover:bg-stone-50"
+                  className="block rounded-md px-3 py-2 transition hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.62_0.14_260_/_0.22)]"
                 >
                   <div className="text-sm font-medium text-stone-950">{item.title}</div>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-stone-600">

@@ -83,7 +83,7 @@ export function FlowDiagram() {
             {flow.footnote}
           </p>
           <Link
-            href="/architecture"
+            href="/docs/architecture-overview"
             className="inline-flex items-center gap-2 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600 transition hover:text-[var(--nyx-accent)]"
           >
             Architecture deep-dive

@@ -1,6 +1,6 @@
 # Trust model
 
-> Darknyx's matching layer runs inside an Intel TDX Confidential VM
+> Nyx's matching layer runs inside an Intel TDX Confidential VM
 > whose compiled image is pinned on Solana through a multisig-
 > governed rotation ceremony. Clients verify the enclave's
 > attestation chain against Intel's TCB root before trusting any
@@ -41,7 +41,7 @@ When we say "you trust the TEE," we mean exactly five things:
 
 What you do NOT have to trust:
 
-- ❌ The Darknyx team to not front-run your orders. (The TEE doesn't
+- ❌ The Nyx team to not front-run your orders. (The TEE doesn't
   let them see orders.)
 - ❌ The TEE operator (Phala) to not exit your funds. (The on-chain
   vault doesn't accept TEE-signed withdraws; only user-generated
@@ -60,46 +60,28 @@ What you do NOT have to trust:
 
 A client wishing to trust the TEE walks this chain:
 
-```text
-1. Fetch /attestation from the TEE
-   Returns:
-   - quote: hex-encoded TDX quote (Intel-signed by hardware)
-   - event_log: hex-encoded JSON event log (replay-able vs RTMR3)
-   - report_data: hex of caller_bytes || SHA-256(tee_pubkey)
-   - tee_pubkey: base58 of the TEE's Ed25519 pubkey
+```mermaid
+flowchart TB
+  S1["1) Fetch /attestation from TEE<br/>Inputs: quote, event_log, report_data, tee_pubkey"]
+  S2["2) Verify TDX quote (dcap-qvl)<br/>QE signature → Intel PCK → Intel ICX intermediate → Intel TCB root"]
+  S3["3) Verify event log<br/>Replay event_log vs RTMR3"]
+  S4["4) Extract measurements<br/>MRTD + RTMR3"]
+  S5["5) Compare against vault_config on Solana<br/>tee_compose_hash + tee_pubkey checks"]
+  S6["6) Verify report_data binding<br/>nonce freshness + SHA-256(tee_pubkey)"]
+  OK["Trust established<br/>• compose_hash approved by governance<br/>• settle pubkey matches on-chain<br/>• quote is fresh"]
+  FAIL["Abort trust decision"]
 
-2. Verify the TDX quote
-   - Run dcap-qvl verify against the quote
-   - Walks: hardware QE signature → Intel PCK cert →
-            Intel ICX intermediate → Intel TCB root
-   - If any link fails, abort
-
-3. Verify the event log
-   - Replay the event_log against RTMR3 (the runtime-measurement
-     register)
-   - Confirms the events recorded by dstack at boot match the
-     hashes the TDX quote attests
-
-4. Extract the measurements
-   - MRTD: the boot-time measurement of the VM image
-   - RTMR3: the runtime measurement of the dstack boot events
-
-5. Compare against vault_config
-   - Fetch vault_config.tee_compose_hash from Solana
-   - Compare against the compose_hash in the event log
-   - Compare vault_config.tee_pubkey against the pubkey in
-     report_data
-
-6. Verify report_data binding
-   - report_data[0..32] should be the caller's freshly-generated
-     nonce (proves freshness)
-   - report_data[32..64] should be SHA-256(tee_pubkey)
-     (proves the quote was issued by the TEE that owns the pubkey)
-
-If all six steps pass, the client knows:
-   - The TEE running is the same compose_hash governance approved
-   - The pubkey signing settles is the same one registered on-chain
-   - The quote was freshly issued for this client's nonce
+  S1 --> S2
+  S2 -->|"pass"| S3
+  S2 -->|"fail"| FAIL
+  S3 -->|"pass"| S4
+  S3 -->|"fail"| FAIL
+  S4 -->|"pass"| S5
+  S4 -->|"fail"| FAIL
+  S5 -->|"pass"| S6
+  S5 -->|"fail"| FAIL
+  S6 -->|"pass"| OK
+  S6 -->|"fail"| FAIL
 ```
 
 The chain rests on Intel's hardware root of trust. Every step
@@ -148,7 +130,7 @@ Each of these triggers a multisig rotation:
 4. Cutover
    - The new CVM begins accepting orders
    - The old CVM's HTTP handler returns 503 until decommissioned
-   - Active settles signed by the old pubkey complete; new
+   - In-flight settles signed by the old pubkey complete; new
      settles use the new pubkey
 
 5. Post-ceremony audit
@@ -159,8 +141,9 @@ Each of these triggers a multisig rotation:
 ```
 
 The ceremony is documented in detail at `docs/tee-attestation-flow.md`
-§5. The important property is that every key rotation is explicit,
-observable, and independently reproducible.
+§5. The first production rotation will be the cutover from the v1
+PER attestation to the v2 TDX attestation, scheduled for the end
+of the TEE v2 workstream.
 
 ---
 
@@ -168,7 +151,7 @@ observable, and independently reproducible.
 
 We model the following adversaries:
 
-### Adversary A: Malicious Darknyx operator (the worst-case "insider")
+### Adversary A: Malicious Nyx operator (the worst-case "insider")
 
 **Capabilities:**
 - Controls the Docker image build pipeline
@@ -233,10 +216,10 @@ We model the following adversaries:
 - Can produce a fork
 
 **What they CAN do:**
-- Censor specific Darknyx transactions (yes — but Solana's leader
+- Censor specific Nyx transactions (yes — but Solana's leader
   rotation means censorship costs the validator their slot
   share; not sustainable for systemic censorship)
-- Reorder Darknyx transactions in their block (yes — but the matched
+- Reorder Nyx transactions in their block (yes — but the matched
   clearing price is computed inside the TEE; reordering doesn't
   let them improve their own fill)
 
@@ -295,7 +278,7 @@ collision + multisig compromise" world):
 | Substitute a different Pyth price | ❌ | The VAA verification chain inside the TEE binds the price to Wormhole guardian signatures |
 
 The damage envelope of a fully-compromised TEE is **censorship +
-information leakage of active orders** — significant, but not
+information leakage of in-flight orders** — significant, but not
 catastrophic. **No funds can be stolen.** Users can always
 withdraw via VALID_SPEND.
 
@@ -303,7 +286,7 @@ withdraw via VALID_SPEND.
 
 ## The "deposit-first, ask-questions-later" property
 
-Darknyx's trust model has a useful structural property: deposit
+Nyx's trust model has a useful structural property: deposit
 risk is **zero**, because deposits don't involve the TEE at all.
 
 A user who deposits funds:
@@ -317,7 +300,7 @@ The TEE only enters the picture when the user wants to trade.
 A user who deposits but doesn't trade has zero TEE exposure;
 their funds are safe even if the TEE is fully compromised.
 
-This shape lets users adopt Darknyx incrementally. Open an account,
+This shape lets users adopt Nyx incrementally. Open an account,
 deposit, see if you like the architecture, withdraw at any time.
 Only when you submit your first order does any of the TEE trust
 chain become load-bearing for you.
@@ -332,10 +315,44 @@ chain become load-bearing for you.
 | **Centralized exchange (CEX)** | Fast, cheap | Full custody risk; operator can front-run; jurisdiction risk |
 | **Off-chain matching with on-chain settlement (Renegade)** | Privacy via MPC | MPC matching is slow at scale; n-party trust assumption (currently 2-party) |
 | **MEV-resistant rollup (commit-reveal, encrypted mempool)** | On-chain auditability | Commit-reveal has front-running windows; encrypted mempool needs threshold cryptography |
-| **TEE-based dark pool (Darknyx)** | Privacy + speed; no n-party MPC; trustless settle | Intel TDX trust; multisig governance trust |
+| **TEE-based dark pool (Nyx)** | Privacy + speed; no n-party MPC; trustless settle | Intel TDX trust; multisig governance trust |
 
 The TEE trust model is the closest thing to "have your cake and
 eat it too." It trades a small amount of hardware trust (Intel's
 TCB) for a large amount of operational trust (the operator can't
 see orders, can't move funds, can't front-run). For most users
 and most use cases, that trade is favorable.
+
+---
+
+## What we're working toward
+
+The current trust model is sound but has a known soft spot: the
+multisig that controls `vault_config.tee_pubkey`. A 3-of-5 multisig
+with governance-known signers is industry standard; it's still a
+trusted set.
+
+The v3 roadmap explores eliminating the multisig in favor of
+**on-chain TDX quote verification**: rather than having the
+multisig pre-approve a `compose_hash`, the vault program would
+verify the TDX attestation directly against Intel's TCB
+certificate chain.
+
+This is a real engineering project (a BPF-friendly DCAP verifier
+doesn't exist today; the Solana compute-unit budget is tight),
+but if it lands, the trust model collapses to:
+
+```text
+trust(Intel TDX hardware) + trust(Wormhole guardians)
+```
+
+— a much cleaner one-sentence statement than the current
+"multisig + intel + wormhole + ..." chain. The roadmap calls this
+"on-chain DCAP" and tracks it as a separate workstream.
+
+---
+
+*Last updated 2026-05-29. Source of truth:
+`docs/tee-attestation-flow.md`, `docs/tee-architecture.md`,
+`programs/vault/src/instructions/`.*
+</content>

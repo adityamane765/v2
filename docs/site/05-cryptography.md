@@ -29,50 +29,21 @@ but BN254 is the right choice today.
 
 ## The key derivation chain
 
-Each Darknyx user maintains four distinct keys, derived in a chain
+Each Nyx user maintains four distinct keys, derived in a chain
 from a single seed:
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  Solana Wallet Keypair  (Ed25519)                            │
-│  ── deterministic seed source ──                             │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
-                          │
-        HKDF-SHA256(seed, label="darknyx.spending.v1")
-                          ▼
-┌──────────────────────────────────────────────────────────────┐
-│  Spending Key  (32-byte Fr scalar)                           │
-│  Holds custody. Used in VALID_SPEND to prove note ownership. │
-│  NEVER sent to the TEE. NEVER appears on-chain in plaintext. │
-└──────────────────────────────────────────────────────────────┘
-                          │
-        HKDF-SHA256(seed, label="darknyx.viewing.v1")
-                          ▼
-┌──────────────────────────────────────────────────────────────┐
-│  Viewing Key  (32-byte Fr scalar)                            │
-│  Decrypts the per-note nonce/blinding pairs the SDK posts in │
-│  the deposit memo. Lets the user reconstruct their note      │
-│  plaintexts from the on-chain Merkle tree alone.             │
-└──────────────────────────────────────────────────────────────┘
-                          │
-        HKDF-SHA256(seed, label="darknyx.trading.v1")
-                          ▼
-┌──────────────────────────────────────────────────────────────┐
-│  Trading Key  (Ed25519 keypair)                              │
-│  Signs order bodies sent to the TEE. The pubkey is what      │
-│  ends up in MatchResult.owner_buyer / .owner_seller and      │
-│  what on-chain settle verifies.                              │
-└──────────────────────────────────────────────────────────────┘
-                          │
-        HKDF-SHA256(seed, label="darknyx.root.v1")
-                          ▼
-┌──────────────────────────────────────────────────────────────┐
-│  Root Key  (32-byte Fr scalar)                               │
-│  Salt for the per-note `r_owner` randomness. Lets the user   │
-│  rotate viewing keys without recomputing every owner_commit. │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  WALLET["Solana Wallet Keypair (Ed25519)<br/>deterministic seed source"]
+  SPEND["Spending Key (32-byte Fr scalar)<br/>Used in VALID_SPEND for note ownership<br/>Never sent to the TEE"]
+  VIEW["Viewing Key (32-byte Fr scalar)<br/>Decrypts per-note nonce/blinding memo data"]
+  TRADE["Trading Key (Ed25519 keypair)<br/>Signs order bodies sent to the TEE"]
+  ROOT["Root Key (32-byte Fr scalar)<br/>Salt source for per-note r_owner randomness"]
+
+  WALLET -->|"HKDF-SHA256(seed, label='nyx.spending.v1')"| SPEND
+  SPEND -->|"HKDF-SHA256(seed, label='nyx.viewing.v1')"| VIEW
+  VIEW -->|"HKDF-SHA256(seed, label='nyx.trading.v1')"| TRADE
+  TRADE -->|"HKDF-SHA256(seed, label='nyx.root.v1')"| ROOT
 ```
 
 The four-key separation is what makes the privacy properties work:
@@ -226,7 +197,7 @@ and similar.
 
 ## The six ZK circuits
 
-Darknyx uses six distinct Groth16 circuits, each enforcing a different
+Nyx uses six distinct Groth16 circuits, each enforcing a different
 invariant. All six are written in Circom 2.x, compiled with
 snarkjs, and have their verification keys baked into the on-chain
 verifier (the constants in `programs/vault/src/zk/vk_*.rs`).
@@ -362,3 +333,29 @@ Every cross-language hash change requires updating both sides AND
 the parity test, in the same commit. CI rejects any PR where the
 parity tests fail. CLAUDE.md §6 documents the rule.
 
+---
+
+## A note on quantum
+
+Like every other production SNARK system, Nyx's cryptography is
+not quantum-resistant. BN254 elliptic-curve operations break under
+Shor's algorithm; Ed25519 signatures break under the same; Poseidon
+itself is fine (it's a hash, not a key-exchange primitive), but
+the public-key operations it sits inside are not.
+
+The state of the art for post-quantum SNARKs (lattice-based,
+hash-based) does not yet have BPF-friendly verifiers comparable to
+`groth16-solana`. We track this space and have a migration plan
+sketched (BLS12-381 first as an intermediate; lattice systems if
+they mature), but no migration is on the near roadmap.
+
+The mitigating factor: any user holding Nyx-deposited funds can
+withdraw at any time, well before a credible quantum threat
+emerges. No long-term funds are required to sit in the protocol.
+
+---
+
+*Last updated 2026-05-29. Source of truth: `CRYPTOGRAPHY.md`,
+`crates/darkpool-crypto/`, `programs/vault/src/zk/`,
+`circuits/templates/`.*
+</content>

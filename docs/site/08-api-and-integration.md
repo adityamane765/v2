@@ -1,6 +1,6 @@
 # API and integration
 
-> Darknyx's TEE exposes a small HTTPS surface for clients: a public
+> Nyx's TEE exposes a small HTTPS surface for clients: a public
 > health/info/attestation set, a bearer-token issuance endpoint, an
 > authenticated orders + settlement-status surface, and a feature-
 > gated debug endpoint used only during development. The full wire
@@ -61,7 +61,7 @@ Content-Type: application/json
 ```
 
 The JWT is HS256-signed with a 32-byte secret derived inside the
-TEE via `dstack.get_key("darknyx/jwt-secret/v1", "jwt")`. The user
+TEE via `dstack.get_key("nyx/jwt-secret/v1", "jwt")`. The user
 includes it in subsequent requests:
 
 ```http
@@ -83,23 +83,17 @@ Every order body is signed with the user's trading-key Ed25519
 keypair. The signature is over the SHA-256 of the canonical body
 bytes:
 
-```text
-canonical_body =
-    "darknyx-order-v1"
- || symbol_len_u8
- || symbol_bytes
- || side_byte
- || order_type_byte
- || amount_le_u64
- || price_limit_le_u64
- || min_fill_size_le_u64
- || expiry_slot_le_u64
- || order_id_16
- || note_commitment_32
- || user_commitment_32
- || arrival_nonce_le_u64
+```mermaid
+flowchart TB
+  PREFIX["'nyx-order-v1'"]
+  BODY["symbol_len_u8 || symbol_bytes || side_byte || order_type_byte || amount_le_u64 || price_limit_le_u64 || min_fill_size_le_u64 || expiry_slot_le_u64 || order_id_16 || note_commitment_32 || user_commitment_32 || arrival_nonce_le_u64"]
+  CANON["canonical_body = PREFIX || BODY"]
+  HASH["SHA-256(canonical_body)"]
+  SIGN["ed25519_sign(hash, trading_key)"]
 
-signature = ed25519_sign(SHA-256(canonical_body), trading_key)
+  PREFIX --> CANON
+  BODY --> CANON
+  CANON --> HASH --> SIGN
 ```
 
 The order body sent to the TEE includes both the trading-key
@@ -228,7 +222,7 @@ Authorization: Bearer eyJ...
 The cancel body's signature is over a different canonical form:
 
 ```text
-"darknyx-cancel-v1" || order_id_16 || trading_key_32 || cancel_nonce_le_u64
+"nyx-cancel-v1" || order_id_16 || trading_key_32 || cancel_nonce_le_u64
 ```
 
 The TEE verifies:
@@ -327,10 +321,10 @@ The TypeScript SDK (in `packages/sdk`) provides typed wrappers
 for each endpoint:
 
 ```ts
-import { DarknyxClient } from '@darknyx/sdk';
+import { NyxClient } from '@nyx/sdk';
 
-const client = new DarknyxClient({
-  endpoint: 'https://tee.darknyx.example.com',
+const client = new NyxClient({
+  endpoint: 'https://tee.nyx.example.com',
   apiKey: 'your-api-key',
   apiSecret: 'your-api-secret',
   passphrase: 'your-passphrase',
@@ -384,6 +378,12 @@ Defaults (configurable per-deployment):
 The rate-limit is enforced at the bearer middleware layer (Layer
 A), so an attacker spamming with bad bearers gets 401-throttled
 before the body is parsed.
+
+A future PR adds per-account customisation (institutional
+accounts get higher limits) and IP-based pre-throttle for
+unauthenticated `/auth/token` traffic.
+
+---
 
 ## Attestation flow from a client's perspective
 
@@ -451,3 +451,10 @@ The schema is consumed by:
 Any change to the wire format requires updating the YAML + the
 SDK + the Rust handlers + the parity tests in a single commit.
 CLAUDE.md §6 documents the byte-equality contracts.
+
+---
+
+*Last updated 2026-05-29. Source of truth:
+`docs/tee-api-openapi.yaml`, `crates/nyx-tee/src/api/`,
+`docs/tee-architecture.md` §11.*
+</content>

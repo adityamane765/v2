@@ -1,6 +1,6 @@
 # The custody layer
 
-> The Solana `vault` program holds every dollar of TVL in Darknyx. It
+> The Solana `vault` program holds every dollar of TVL in Nyx. It
 > owns a single Merkle tree of UTXO note commitments, a nullifier
 > set, a consumed-note set, and the registered TEE pubkey. Every
 > withdraw requires a zero-knowledge proof; every settle requires
@@ -12,7 +12,7 @@
 
 ## The UTXO note model
 
-Darknyx uses a UTXO model (similar to Zcash, Tornado Cash, or Aztec)
+Nyx uses a UTXO model (similar to Zcash, Tornado Cash, or Aztec)
 rather than an account model. Funds live in **notes**: opaque
 32-byte Poseidon commitments stored as leaves in a single global
 Merkle tree.
@@ -131,7 +131,7 @@ The proof attests that for every slot in the batch:
   template byte-for-byte.
 
 VALID_MATCH_BATCH is the single most cryptographically expensive
-component in Darknyx. It's currently instantiated at N=16 matches per
+component in Nyx. It's currently instantiated at N=16 matches per
 proof; ~163,000 constraints; uses pot18 (the 2^18 PowersOfTau
 ceremony output).
 
@@ -201,7 +201,7 @@ There is **no admin "exit"** account. There is **no upgrade
 authority** that can replace the verifier code without a multisig
 rotation that itself goes through the on-chain governance ix. The
 vault's compiled bytecode is fixed once the upgrade authority is
-removed.
+removed (planned for mainnet launch).
 
 ---
 
@@ -243,7 +243,7 @@ it before any tokens move.
 
 ## The v3.5 batched validity hardening
 
-Darknyx is currently on **v3.5** — the batched-validity migration that
+Nyx is currently on **v3.5** — the batched-validity migration that
 landed in early 2026. The progression:
 
 | Version | What it added |
@@ -281,3 +281,25 @@ The list is intentionally long and dense. The cryptography in
 [cryptography](./cryptography.md) and the trust model in
 [trust-model](./trust-model.md) explain the deeper invariants
 each defense ultimately rests on.
+
+---
+
+## What's coming
+
+The custody layer is stable. The recent PRs landing in the TEE v2
+workstream don't touch the on-chain code at all — they're moving
+the matching layer from MagicBlock PER to a dedicated TDX CVM.
+The vault program will see a TEE-pubkey rotation when the v2 CVM
+goes live (the existing v1 PER attestation will be replaced by the
+v2 TDX attestation), but the vault's instructions, state, and
+verifier code stay the same.
+
+The next custody-layer change planned is a deferred upgrade-
+authority removal for mainnet — once the upgrade authority is
+permanently null, the vault becomes truly immutable.
+
+---
+
+*Last updated 2026-05-29. Source of truth:
+`programs/vault/src/`, `CRYPTOGRAPHY.md`, `docs/v3.5-migration.md`.*
+</content>
